@@ -1,0 +1,28 @@
+{
+  "android": {
+    "app_id": "ca-app-pub-6181092189054832~7096810595",
+    "rewarded": "ca-app-pub-6181092189054832/9985847751",
+    "interstitial": "ca-app-pub-6181092189054832/7351945552",
+    "banner": "ca-app-pub-6181092189054832/6857121530",
+    "native": "ca-app-pub-6181092189054832/9505118560"
+  },
+  "ios": {
+    "app_id": "ca-app-pub-6181092189054832~6038879798",
+    "rewarded": "ca-app-pub-6181092189054832/9814457364",
+    "interstitial": "ca-app-pub-6181092189054832/2068679347",
+    "banner": "ca-app-pub-6181092189054832/5160896483",
+    "native": ""
+  },
+  "rewards": {
+    "quiz_and_learn": {
+      "rewarded_video": {
+        "coins": 10
+      }
+    }
+  },
+  "test_mode": true,
+  "frequency_capping": {
+    "interstitial_min_interval_minutes": 3,
+    "interstitial_max_per_session": 5
+  }
+}

@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.admin == true;
+    }
+    
+    function isValidWithdrawalMethod(method) {
+      return method in ['mpesa', 'tigopesa', 'airtel', 'halopesa', 'usdt'];
+    }
+    
+    function isValidWithdrawalStatus(status) {
+      return status in ['pending', 'completed', 'declined'];
+    }
+    
+    function isValidTransactionType(type) {
+      return type in ['earning', 'spending', 'withdrawal'];
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read and update their own profile data
+      allow read, write: if isOwner(userId);
+      
+      // Prevent direct balance modifications (only via Cloud Functions)
+      allow update: if isOwner(userId) && 
+        !('balance' in resource.data.diff(request.resource.data).affectedKeys());
+      
+      // Allow admin to read all users
+      allow read: if isAdmin();
+      
+      // Allow admin to update user roles and balance
+      allow update: if isAdmin() && 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles', 'balance']) ||
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance']));
+    }
+    
+    // Transactions collection
+    match /transactions/{transactionId} {
+      // Users can only read their own transactions
+      allow read: if isOwner(resource.data.userId);
+      
+      // Users cannot create or modify transactions (only Cloud Functions can)
+      allow create, update, delete: if false;
+      
+      // Allow admin to read all transactions
+      allow read: if isAdmin();
+    }
+    
+    // Withdrawals collection
+    match /withdrawals/{withdrawalId} {
+      // Users can read their own withdrawal requests
+      allow read: if isOwner(resource.data.userId);
+      
+      // Users can create new withdrawal requests with specific constraints
+      allow create: if isOwner(request.resource.data.userId) &&
+        request.resource.data.status == 'pending' &&
+        isValidWithdrawalMethod(request.resource.data.method) &&
+        request.resource.data.amount > 0 &&
+        request.resource.data.amount <= 10000 && // Maximum withdrawal limit
+        request.resource.data.createdAt == request.time;
+      
+      // Users cannot update or delete withdrawal requests
+      allow update, delete: if false;
+      
+      // Admin can read all withdrawals and update status
+      allow read: if isAdmin();
+      allow update: if isAdmin() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'processedAt', 'notes']) &&
+        isValidWithdrawalStatus(request.resource.data.status);
+    }
+    
+    // Admin-only collections (if needed for admin dashboard)
+    match /admin/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // System settings (if needed)
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 

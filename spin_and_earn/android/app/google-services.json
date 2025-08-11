@@ -1,0 +1,83 @@
+{
+  "project_info": {
+    "project_number": "490128973055",
+    "firebase_url": "https://fiveinone-earning-system-default-rtdb.firebaseio.com",
+    "project_id": "fiveinone-earning-system",
+    "storage_bucket": "fiveinone-earning-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:490128973055:android:19d653b953e2f8d63440ca",
+        "android_client_info": {
+          "package_name": "com.qwantumtech.spinandearn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "490128973055-ln29p075tf60rl11aujfn48ft21phnfd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAr1JOJBFNwmfVo0gPEVofMXK5-6QJ5mWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "490128973055-ln29p075tf60rl11aujfn48ft21phnfd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "490128973055-1v356eog38l0u8obbjrjsn0dlj68077e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.qwantumtech.wallethub"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:490128973055:android:ec217c23e35ebfdb3440ca",
+        "android_client_info": {
+          "package_name": "com.qwantumtech.wallethub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "490128973055-ln29p075tf60rl11aujfn48ft21phnfd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAr1JOJBFNwmfVo0gPEVofMXK5-6QJ5mWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "490128973055-ln29p075tf60rl11aujfn48ft21phnfd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "490128973055-1v356eog38l0u8obbjrjsn0dlj68077e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.qwantumtech.wallethub"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
