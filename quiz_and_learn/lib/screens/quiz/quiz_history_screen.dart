@@ -30,9 +30,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       // TODO: Load actual quiz history from database
       // For now, create sample data
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _quizHistory = _getSampleQuizHistory();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -102,19 +102,24 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   List<QuizHistory> _getFilteredHistory() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     switch (_selectedFilter) {
       case 'today':
         return _quizHistory.where((quiz) {
-          final quizDate = DateTime(quiz.completedAt.year, quiz.completedAt.month, quiz.completedAt.day);
+          final quizDate = DateTime(quiz.completedAt.year,
+              quiz.completedAt.month, quiz.completedAt.day);
           return quizDate.isAtSameMomentAs(today);
         }).toList();
       case 'week':
         final weekAgo = today.subtract(const Duration(days: 7));
-        return _quizHistory.where((quiz) => quiz.completedAt.isAfter(weekAgo)).toList();
+        return _quizHistory
+            .where((quiz) => quiz.completedAt.isAfter(weekAgo))
+            .toList();
       case 'month':
         final monthAgo = today.subtract(const Duration(days: 30));
-        return _quizHistory.where((quiz) => quiz.completedAt.isAfter(monthAgo)).toList();
+        return _quizHistory
+            .where((quiz) => quiz.completedAt.isAfter(monthAgo))
+            .toList();
       default:
         return _quizHistory;
     }
@@ -146,7 +151,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredHistory = _getFilteredHistory();
-    
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -244,7 +249,8 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             child: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
                   )
                 : filteredHistory.isEmpty
@@ -282,7 +288,8 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+      String label, String value, IconData icon, Color color) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
@@ -343,7 +350,11 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                               ),
                             ),
                             Text(
-                              quiz.difficulty.toString().split('.').last.toUpperCase(),
+                              quiz.difficulty
+                                  .toString()
+                                  .split('.')
+                                  .last
+                                  .toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,
@@ -358,14 +369,14 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                                         Text(
-                       '${quiz.score}/${quiz.totalQuestions}',
-                       style: const TextStyle(
-                         fontSize: 18,
-                         fontWeight: FontWeight.bold,
-                         color: AppColors.primary,
-                       ),
-                     ),
+                    Text(
+                      '${quiz.score}/${quiz.totalQuestions}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
                     Text(
                       '${quiz.correctAnswers}/${quiz.totalQuestions} correct',
                       style: const TextStyle(
@@ -377,9 +388,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Progress Bar
             LinearProgressIndicator(
               value: quiz.correctAnswers / quiz.totalQuestions,
@@ -389,9 +400,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               ),
               minHeight: 6,
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Stats Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -413,9 +424,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Date
             Text(
               'Completed on ${_formatDate(quiz.completedAt)}',

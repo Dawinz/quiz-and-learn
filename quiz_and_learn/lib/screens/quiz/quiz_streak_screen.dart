@@ -28,9 +28,9 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
       // TODO: Load actual user streak from database
       // For now, create sample data
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _userStreak = _getSampleStreak();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -81,13 +81,13 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
 
   bool _hasQuizOnDate(DateTime date) {
     if (_userStreak == null) return false;
-    
+
     final quizDate = DateTime(
       _userStreak!.lastQuizDate.year,
       _userStreak!.lastQuizDate.month,
       _userStreak!.lastQuizDate.day,
     );
-    
+
     final checkDate = DateTime(date.year, date.month, date.day);
     return quizDate.isAtSameMomentAs(checkDate);
   }
@@ -118,19 +118,19 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
                       // Current Streak Card
                       _buildCurrentStreakCard(),
                       const SizedBox(height: 16),
-                      
+
                       // Weekly Calendar
                       _buildWeeklyCalendar(),
                       const SizedBox(height: 16),
-                      
+
                       // Statistics Cards
                       _buildStatisticsCards(),
                       const SizedBox(height: 16),
-                      
+
                       // Category Streaks
                       _buildCategoryStreaks(),
                       const SizedBox(height: 16),
-                      
+
                       // Difficulty Streaks
                       _buildDifficultyStreaks(),
                     ],
@@ -251,8 +251,9 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: _getLast7Days().map((date) {
               final hasQuiz = _hasQuizOnDate(date);
-              final isToday = date.isAtSameMomentAs(DateTime.now().subtract(Duration(days: DateTime.now().weekday - date.weekday)));
-              
+              final isToday = date.isAtSameMomentAs(DateTime.now().subtract(
+                  Duration(days: DateTime.now().weekday - date.weekday)));
+
               return Column(
                 children: [
                   Text(
@@ -269,12 +270,12 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: hasQuiz 
-                          ? AppColors.primary 
-                          : isToday 
+                      color: hasQuiz
+                          ? AppColors.primary
+                          : isToday
                               ? Colors.orange.withOpacity(0.2)
                               : Colors.grey.withOpacity(0.1),
-                      border: isToday 
+                      border: isToday
                           ? Border.all(color: Colors.orange, width: 2)
                           : null,
                     ),
@@ -335,7 +336,8 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -417,7 +419,8 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -491,7 +494,8 @@ class _QuizStreakScreenState extends State<QuizStreakScreen> {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),

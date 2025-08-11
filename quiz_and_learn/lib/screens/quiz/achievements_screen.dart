@@ -29,9 +29,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       // TODO: Load actual user achievements from database
       // For now, create sample data
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _userAchievements = _getSampleAchievements();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -101,9 +101,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   List<QuizAchievement> _getFilteredAchievements() {
     switch (_selectedFilter) {
       case 'unlocked':
-        return _userAchievements.where((achievement) => achievement.isUnlocked).toList();
+        return _userAchievements
+            .where((achievement) => achievement.isUnlocked)
+            .toList();
       case 'locked':
-        return _userAchievements.where((achievement) => !achievement.isUnlocked).toList();
+        return _userAchievements
+            .where((achievement) => !achievement.isUnlocked)
+            .toList();
       default:
         return _userAchievements;
     }
@@ -112,33 +116,40 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   List<QuizAchievement> _getAllAchievements() {
     // Combine user achievements with all available achievements
     final allAchievements = List<QuizAchievement>.from(QuizAchievements.all);
-    
+
     // Update with user's unlocked status
     for (final userAchievement in _userAchievements) {
-      final index = allAchievements.indexWhere((a) => a.id == userAchievement.id);
+      final index =
+          allAchievements.indexWhere((a) => a.id == userAchievement.id);
       if (index != -1) {
         allAchievements[index] = userAchievement;
       }
     }
-    
+
     return allAchievements;
   }
 
   List<QuizAchievement> _getFilteredAllAchievements() {
     final allAchievements = _getAllAchievements();
-    
+
     switch (_selectedFilter) {
       case 'unlocked':
-        return allAchievements.where((achievement) => achievement.isUnlocked).toList();
+        return allAchievements
+            .where((achievement) => achievement.isUnlocked)
+            .toList();
       case 'locked':
-        return allAchievements.where((achievement) => !achievement.isUnlocked).toList();
+        return allAchievements
+            .where((achievement) => !achievement.isUnlocked)
+            .toList();
       default:
         return allAchievements;
     }
   }
 
   int _getUnlockedCount() {
-    return _userAchievements.where((achievement) => achievement.isUnlocked).length;
+    return _userAchievements
+        .where((achievement) => achievement.isUnlocked)
+        .length;
   }
 
   int _getTotalCount() {
@@ -148,7 +159,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredAchievements = _getFilteredAllAchievements();
-    
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -176,13 +187,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               children: [
                 // Progress Bar
                 LinearProgressIndicator(
-                  value: _getTotalCount() > 0 ? _getUnlockedCount() / _getTotalCount() : 0.0,
+                  value: _getTotalCount() > 0
+                      ? _getUnlockedCount() / _getTotalCount()
+                      : 0.0,
                   backgroundColor: Colors.grey[300],
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   minHeight: 8,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Progress Text
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -252,7 +266,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             child: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
                   )
                 : filteredAchievements.isEmpty
@@ -296,12 +311,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       elevation: achievement.isUnlocked ? 4 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: achievement.isUnlocked 
+        side: achievement.isUnlocked
             ? BorderSide(color: achievement.tierColor, width: 2)
             : BorderSide.none,
       ),
       child: Container(
-        decoration: achievement.isUnlocked 
+        decoration: achievement.isUnlocked
             ? BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -322,7 +337,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: achievement.isUnlocked 
+                  color: achievement.isUnlocked
                       ? achievement.tierColor.withOpacity(0.2)
                       : Colors.grey.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -341,9 +356,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         ),
                 ),
               ),
-              
+
               const SizedBox(width: 16),
-              
+
               // Achievement Details
               Expanded(
                 child: Column(
@@ -357,7 +372,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: achievement.isUnlocked 
+                              color: achievement.isUnlocked
                                   ? AppColors.onBackground
                                   : Colors.grey[600],
                             ),
@@ -365,7 +380,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         ),
                         if (achievement.isUnlocked) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: achievement.tierColor.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
@@ -382,25 +398,22 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         ],
                       ],
                     ),
-                    
                     const SizedBox(height: 4),
-                    
                     Text(
                       achievement.description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: achievement.isUnlocked 
+                        color: achievement.isUnlocked
                             ? Colors.grey[600]
                             : Colors.grey[500],
                       ),
                     ),
-                    
                     const SizedBox(height: 8),
-                    
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -414,10 +427,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                             ),
                           ),
                         ),
-                        
                         const SizedBox(width: 8),
-                        
-                        if (achievement.isUnlocked && achievement.unlockedAt != null) ...[
+                        if (achievement.isUnlocked &&
+                            achievement.unlockedAt != null) ...[
                           Text(
                             'Unlocked ${_formatDate(achievement.unlockedAt!)}',
                             style: TextStyle(

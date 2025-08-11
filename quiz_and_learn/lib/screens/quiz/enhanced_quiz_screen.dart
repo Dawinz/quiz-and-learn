@@ -46,7 +46,7 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
         (c) => c.name == widget.category,
         orElse: () => QuizCategory.general,
       );
-      
+
       _quizService.startQuiz(
         category: category,
         difficulty: widget.difficulty,
@@ -54,7 +54,7 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
         timeLimit: widget.timeLimit,
         questionTimeLimit: widget.questionTimeLimit,
       );
-      
+
       _loadNextQuestion();
     } catch (e) {
       setState(() {
@@ -217,14 +217,16 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
               children: [
                 // Progress Bar
                 LinearProgressIndicator(
-                  value: ((sessionStats['currentQuestionIndex'] as int? ?? 0) + 1) /
+                  value: ((sessionStats['currentQuestionIndex'] as int? ?? 0) +
+                          1) /
                       (sessionStats['totalQuestions'] as int? ?? 1),
                   backgroundColor: Colors.grey[300],
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   minHeight: 8,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Timer Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,10 +245,11 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: _quizService.quizTimeRemaining < 30 
-                                  ? Colors.red[100] 
+                              color: _quizService.quizTimeRemaining < 30
+                                  ? Colors.red[100]
                                   : AppColors.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -255,8 +258,8 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: _quizService.quizTimeRemaining < 30 
-                                    ? Colors.red[700] 
+                                color: _quizService.quizTimeRemaining < 30
+                                    ? Colors.red[700]
                                     : AppColors.primary,
                               ),
                             ),
@@ -264,7 +267,7 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                         ],
                       ),
                     ],
-                    
+
                     // Question Timer
                     if (widget.questionTimeLimit > 0) ...[
                       Column(
@@ -279,10 +282,11 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: _quizService.questionTimeRemaining < 10 
-                                  ? Colors.red[100] 
+                              color: _quizService.questionTimeRemaining < 10
+                                  ? Colors.red[100]
                                   : AppColors.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -291,8 +295,8 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: _quizService.questionTimeRemaining < 10 
-                                    ? Colors.red[700] 
+                                color: _quizService.questionTimeRemaining < 10
+                                    ? Colors.red[700]
                                     : AppColors.primary,
                               ),
                             ),
@@ -300,7 +304,7 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                         ],
                       ),
                     ],
-                    
+
                     // Score Display
                     Column(
                       children: [
@@ -314,7 +318,8 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(16),
@@ -372,7 +377,9 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isAnswered || _selectedAnswer == null ? null : () => _submitAnswer(_selectedAnswer!),
+                      onPressed: _isAnswered || _selectedAnswer == null
+                          ? null
+                          : () => _submitAnswer(_selectedAnswer!),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
