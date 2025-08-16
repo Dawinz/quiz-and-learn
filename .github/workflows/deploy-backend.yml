@@ -1,0 +1,56 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'quiz_and_learn/backend/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: quiz_and_learn/backend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd quiz_and_learn/backend
+        npm ci
+    
+    - name: Build project
+      run: |
+        cd quiz_and_learn/backend
+        npm run build
+    
+    - name: Deploy to Railway
+      uses: bervProject/railway-deploy@v1.0.0
+      with:
+        service: quiz-and-learn-backend
+        token: ${{ secrets.RAILWAY_TOKEN }}
+    
+    - name: Deploy to Render
+      uses: johnbeynon/render-deploy-action@v1.0.0
+      with:
+        service_id: ${{ secrets.RENDER_SERVICE_ID }}
+        api_key: ${{ secrets.RENDER_API_KEY }}
+    
+    - name: Deploy to Fly.io
+      uses: superfly/flyctl-actions/setup-flyctl@master
+      with:
+        version: v0.1.0
+      
+    - name: Deploy to Fly.io
+      run: |
+        cd quiz_and_learn/backend
+        flyctl deploy --remote-only
+      env:
+        FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

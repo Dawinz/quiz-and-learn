@@ -34,7 +34,7 @@ class ApiService {
   }
 
   void _initializeBaseUrl() {
-    baseUrl = "https://backend-o53691zww-dawson-s-projects.vercel.app/api";
+    baseUrl = "https://backend-47ufwyae6-dawson-s-projects.vercel.app/api";
   }
 
   Future<String?> _loadToken() async {

@@ -2,30 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/server.ts",
+      "src": "api/server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/v1/(.*)",
-      "dest": "src/server.ts"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "src/server.ts"
-    },
-    {
-      "src": "/health",
-      "dest": "src/server.ts"
-    },
-    {
       "src": "/(.*)",
-      "dest": "src/server.ts"
+      "dest": "api/server.js"
     }
   ],
   "functions": {
-    "src/server.ts": {
+    "api/server.js": {
       "maxDuration": 30
     }
   },

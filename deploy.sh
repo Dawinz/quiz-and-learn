@@ -1,232 +1,150 @@
 #!/bin/bash
 
-# Quiz and Learn Backend Deployment Script
-# This script helps deploy the backend to various platforms
+echo "🚀 Quiz & Learn Backend Deployment Script"
+echo "=========================================="
 
-set -e
+# Check if we're in the right directory
+if [ ! -f "quiz_and_learn/backend/package.json" ]; then
+    echo "❌ Please run this script from the project root directory"
+    exit 1
+fi
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Check if required tools are installed
-check_requirements() {
-    print_status "Checking requirements..."
+# Function to deploy to Render
+deploy_to_render() {
+    echo "📦 Deploying to Render..."
     
-    if ! command -v node &> /dev/null; then
-        print_error "Node.js is not installed. Please install Node.js 18+ first."
-        exit 1
+    # Check if render CLI is installed
+    if ! command -v render &> /dev/null; then
+        echo "📥 Installing Render CLI..."
+        curl -sL https://render.com/download.sh | sh
     fi
     
-    if ! command -v npm &> /dev/null; then
-        print_error "npm is not installed. Please install npm first."
-        exit 1
-    fi
+    # Deploy to Render
+    cd quiz_and_learn/backend
+    render deploy --service quiz-and-learn-backend
     
-    print_success "Requirements check passed"
+    echo "✅ Render deployment initiated!"
+    echo "🔗 Check your Render dashboard for the deployment status"
 }
 
-# Build the project
-build_project() {
-    print_status "Building project..."
+# Function to deploy to Railway
+deploy_to_railway() {
+    echo "🚂 Deploying to Railway..."
     
-    # Clean previous build
-    if [ -d "dist" ]; then
-        rm -rf dist
-    fi
-    
-    # Install dependencies
-    npm ci
-    
-    # Build the project
-    npm run build
-    
-    print_success "Project built successfully"
-}
-
-# Deploy to Heroku
-deploy_heroku() {
-    print_status "Deploying to Heroku..."
-    
-    if ! command -v heroku &> /dev/null; then
-        print_error "Heroku CLI is not installed. Please install it first: https://devcenter.heroku.com/articles/heroku-cli"
-        exit 1
-    fi
-    
-    # Check if Heroku app exists
-    if ! heroku apps:info &> /dev/null; then
-        print_warning "No Heroku app configured. Please create one first:"
-        echo "  heroku create your-app-name"
-        echo "  heroku git:remote -a your-app-name"
-        exit 1
-    fi
-    
-    # Deploy
-    git add .
-    git commit -m "Deploy to Heroku - $(date)"
-    git push heroku main
-    
-    print_success "Deployed to Heroku successfully"
-}
-
-# Deploy to Railway
-deploy_railway() {
-    print_status "Deploying to Railway..."
-    
+    # Check if Railway CLI is installed
     if ! command -v railway &> /dev/null; then
-        print_error "Railway CLI is not installed. Please install it first: npm i -g @railway/cli"
-        exit 1
+        echo "📥 Installing Railway CLI..."
+        npm install -g @railway/cli
     fi
     
-    # Deploy
+    # Deploy to Railway
+    cd quiz_and_learn/backend
     railway up
     
-    print_success "Deployed to Railway successfully"
+    echo "✅ Railway deployment initiated!"
+    echo "🔗 Check your Railway dashboard for the deployment status"
 }
 
-# Deploy to Vercel
-deploy_vercel() {
-    print_status "Deploying to Vercel..."
+# Function to deploy to Fly.io
+deploy_to_fly() {
+    echo "🦅 Deploying to Fly.io..."
     
-    if ! command -v vercel &> /dev/null; then
-        print_error "Vercel CLI is not installed. Please install it first: npm i -g vercel"
-        exit 1
+    # Check if Fly CLI is installed
+    if ! command -v flyctl &> /dev/null; then
+        echo "📥 Installing Fly CLI..."
+        curl -L https://fly.io/install.sh | sh
     fi
     
-    # Deploy
-    vercel --prod
+    # Deploy to Fly.io
+    cd quiz_and_learn/backend
+    flyctl deploy
     
-    print_success "Deployed to Vercel successfully"
+    echo "✅ Fly.io deployment initiated!"
+    echo "🔗 Check your Fly.io dashboard for the deployment status"
 }
 
-# Deploy using Docker
-deploy_docker() {
-    print_status "Building and running Docker container..."
+# Function to deploy to Heroku
+deploy_to_heroku() {
+    echo "🦸 Deploying to Heroku..."
     
-    # Build image
-    docker build -t quiz-and-learn-backend .
-    
-    # Stop existing container if running
-    docker stop quiz-and-learn-backend 2>/dev/null || true
-    docker rm quiz-and-learn-backend 2>/dev/null || true
-    
-    # Run new container
-    docker run -d \
-        --name quiz-and-learn-backend \
-        -p 3000:3000 \
-        --env-file .env \
-        quiz-and-learn-backend
-    
-    print_success "Docker container deployed successfully"
-    print_status "Container running on http://localhost:3000"
-}
-
-# Run locally with Docker Compose
-run_local() {
-    print_status "Starting local development environment with Docker Compose..."
-    
-    # Check if .env file exists
-    if [ ! -f ".env" ]; then
-        print_warning ".env file not found. Creating from example..."
-        cp env.example .env
-        print_warning "Please update .env file with your configuration before continuing"
-        exit 1
+    # Check if Heroku CLI is installed
+    if ! command -v heroku &> /dev/null; then
+        echo "📥 Installing Heroku CLI..."
+        curl https://cli-assets.heroku.com/install.sh | sh
     fi
     
-    # Start services
-    docker-compose up -d
+    # Deploy to Heroku
+    cd quiz_and_learn/backend
+    heroku create quiz-and-learn-backend-$(date +%s)
+    git add .
+    git commit -m "Deploy to Heroku"
+    git push heroku main
     
-    print_success "Local environment started successfully"
-    print_status "API running on http://localhost:3000"
-    print_status "MongoDB running on localhost:27017"
-    print_status "Mongo Express running on http://localhost:8081"
+    echo "✅ Heroku deployment initiated!"
+    echo "🔗 Check your Heroku dashboard for the deployment status"
 }
 
-# Show usage
-show_usage() {
-    echo "Quiz and Learn Backend Deployment Script"
-    echo ""
-    echo "Usage: $0 [OPTION]"
-    echo ""
-    echo "Options:"
-    echo "  build       Build the project"
-    echo "  heroku      Deploy to Heroku"
-    echo "  railway     Deploy to Railway"
-    echo "  vercel      Deploy to Vercel"
-    echo "  docker      Deploy using Docker"
-    echo "  local       Run locally with Docker Compose"
-    echo "  all         Build and deploy to all platforms"
-    echo "  help        Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0 build"
-    echo "  $0 heroku"
-    echo "  $0 local"
+# Function to deploy to DigitalOcean App Platform
+deploy_to_digitalocean() {
+    echo "🐙 Deploying to DigitalOcean App Platform..."
+    
+    # Check if doctl is installed
+    if ! command -v doctl &> /dev/null; then
+        echo "📥 Installing DigitalOcean CLI..."
+        snap install doctl
+    fi
+    
+    echo "📋 Please deploy manually to DigitalOcean App Platform:"
+    echo "1. Go to https://cloud.digitalocean.com/apps"
+    echo "2. Click 'Create App'"
+    echo "3. Connect your GitHub repository"
+    echo "4. Set build command: cd quiz_and_learn/backend && npm install && npm run build"
+    echo "5. Set run command: cd quiz_and_learn/backend && npm start"
+    echo "6. Add environment variables (MONGO_URI, JWT_SECRET, etc.)"
 }
 
-# Main script
-main() {
-    case "${1:-help}" in
-        "build")
-            check_requirements
-            build_project
-            ;;
-        "heroku")
-            check_requirements
-            build_project
-            deploy_heroku
-            ;;
-        "railway")
-            check_requirements
-            build_project
-            deploy_railway
-            ;;
-        "vercel")
-            check_requirements
-            build_project
-            deploy_vercel
-            ;;
-        "docker")
-            check_requirements
-            build_project
-            deploy_docker
-            ;;
-        "local")
-            run_local
-            ;;
-        "all")
-            check_requirements
-            build_project
-            deploy_heroku
-            deploy_railway
-            deploy_vercel
-            deploy_docker
-            ;;
-        "help"|*)
-            show_usage
-            ;;
-    esac
-}
+# Main menu
+echo ""
+echo "Choose your deployment option:"
+echo "1) Render (Free, Easy)"
+echo "2) Railway (Free tier available)"
+echo "3) Fly.io (Free tier available)"
+echo "4) Heroku (Free tier available)"
+echo "5) DigitalOcean App Platform (Free tier available)"
+echo "6) Deploy to all (GitHub Actions)"
+echo ""
 
-# Run main function
-main "$@"
+read -p "Enter your choice (1-6): " choice
+
+case $choice in
+    1)
+        deploy_to_render
+        ;;
+    2)
+        deploy_to_railway
+        ;;
+    3)
+        deploy_to_fly
+        ;;
+    4)
+        deploy_to_heroku
+        ;;
+    5)
+        deploy_to_digitalocean
+        ;;
+    6)
+        echo "🚀 Setting up GitHub Actions deployment..."
+        echo "📋 Please:"
+        echo "1. Push this repository to GitHub"
+        echo "2. Set up the required secrets in your GitHub repository"
+        echo "3. The GitHub Actions workflow will automatically deploy on push"
+        ;;
+    *)
+        echo "❌ Invalid choice. Please run the script again."
+        exit 1
+        ;;
+esac
+
+echo ""
+echo "🎉 Deployment process completed!"
+echo "📱 Don't forget to update your Flutter app with the new backend URL"

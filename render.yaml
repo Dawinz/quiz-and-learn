@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: quiz-and-learn-backend
+    env: node
+    plan: free
+    buildCommand: cd quiz_and_learn/backend && npm install && npm run build
+    startCommand: cd quiz_and_learn/backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"
