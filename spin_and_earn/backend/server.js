@@ -14,6 +14,7 @@ const spinRoutes = require('./routes/spin');
 const referralRoutes = require('./routes/referrals');
 const taskRoutes = require('./routes/tasks');
 const quizRoutes = require('./routes/quizzes');
+const analyticsRoutes = require('./routes/analytics');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -67,6 +68,7 @@ app.use('/api/spin', spinRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/quizzes', quizRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
