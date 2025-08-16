@@ -52,9 +52,8 @@ class _SecurityBannerState extends State<SecurityBanner> {
       return widget.child;
     }
 
-    final shouldShowBanner = widget.showWhenSecure
-        ? _securityStatus?.isSecure == false
-        : _securityStatus?.isSecure == false;
+    // Don't show banner when security is disabled for development
+    final shouldShowBanner = false; // Temporarily disable security banner
 
     if (!shouldShowBanner) {
       return widget.child;
