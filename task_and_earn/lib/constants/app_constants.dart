@@ -17,6 +17,11 @@ class AppColors {
   static const Color success = Color(0xFF388E3C);
   static const Color warning = Color(0xFFFFA000);
   static const Color info = Color(0xFF1976D2);
+
+  // Additional colors
+  static const Color textPrimary = Color(0xFF212121);
+  static const Color textSecondary = Color(0xFF757575);
+  static const Color border = Color(0xFFE0E0E0);
 }
 
 class AppSizes {
@@ -26,6 +31,11 @@ class AppSizes {
   static const double radius = 12.0;
   static const double radiusSmall = 8.0;
   static const double radiusLarge = 16.0;
+
+  // Additional spacing
+  static const double spacingSmall = 8.0;
+  static const double spacingMedium = 16.0;
+  static const double spacingLarge = 24.0;
 }
 
 class AppTextStyles {
@@ -34,31 +44,31 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle headline2 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle headline3 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle body1 = TextStyle(
     fontSize: 16,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle body2 = TextStyle(
     fontSize: 14,
     color: AppColors.onSurface,
   );
-  
+
   static const TextStyle caption = TextStyle(
     fontSize: 12,
     color: AppColors.onSurface,
   );
-} 
+}

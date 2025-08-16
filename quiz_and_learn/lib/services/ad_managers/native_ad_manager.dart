@@ -102,9 +102,15 @@ class NativeAdManager {
   Widget? getNativeAdWidget() {
     if (!isAvailable) return null;
 
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('native_${DateTime.now().millisecondsSinceEpoch}_${_nativeAd.hashCode}');
+
     return Container(
       height: 72, // Standard list tile height
-      child: AdWidget(ad: _nativeAd!),
+      child: AdWidget(
+        key: uniqueKey,
+        ad: _nativeAd!,
+      ),
     );
   }
 
@@ -115,6 +121,9 @@ class NativeAdManager {
   }) {
     if (!isAvailable) return null;
 
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('custom_native_${DateTime.now().millisecondsSinceEpoch}_${_nativeAd.hashCode}');
+
     return Container(
       height: height,
       padding: padding,
@@ -122,13 +131,19 @@ class NativeAdManager {
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: AdWidget(ad: _nativeAd!),
+      child: AdWidget(
+        key: uniqueKey,
+        ad: _nativeAd!,
+      ),
     );
   }
 
   /// Get native ad widget for results screen
   Widget? getResultsScreenNativeAd() {
     if (!isAvailable) return null;
+
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('results_native_${DateTime.now().millisecondsSinceEpoch}_${_nativeAd.hashCode}');
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -152,7 +167,10 @@ class NativeAdManager {
           const SizedBox(height: 8),
           SizedBox(
             height: 80,
-            child: AdWidget(ad: _nativeAd!),
+            child: AdWidget(
+              key: uniqueKey,
+              ad: _nativeAd!,
+            ),
           ),
         ],
       ),

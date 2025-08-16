@@ -87,8 +87,8 @@ class _EnhancedQuizScreenState extends State<EnhancedQuizScreen> {
       MaterialPageRoute(
         builder: (context) => QuizResultsScreen(
           category: widget.category,
-          score: results.score,
-          totalQuestions: results.totalQuestions,
+          score: results['score'] as int? ?? 0,
+          totalQuestions: results['totalQuestions'] as int? ?? 0,
         ),
       ),
     );

@@ -1,0 +1,12 @@
+{
+  "backend": {
+    "base_url": "https://backend-jperulfmz-dawson-s-projects.vercel.app",
+    "api_version": "/api",
+    "timeout_seconds": 30
+  },
+  "referral": {
+    "reward_amount": 100,
+    "max_referrals_per_user": 10
+  },
+  "environment": "production"
+}

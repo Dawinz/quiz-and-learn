@@ -8,7 +8,8 @@ import '../models/quiz_achievement.dart';
 
 class EnhancedWalletService extends ChangeNotifier {
   static EnhancedWalletService? _instance;
-  static EnhancedWalletService get instance => _instance ??= EnhancedWalletService._();
+  static EnhancedWalletService get instance =>
+      _instance ??= EnhancedWalletService._();
 
   EnhancedWalletService._();
 
@@ -21,7 +22,7 @@ class EnhancedWalletService extends ChangeNotifier {
   static const String _usedReferralCodeKey = 'used_referral_code';
   static const String _transactionsKey = 'coin_transactions';
   static const String _premiumFeaturesKey = 'user_premium_features';
-  
+
   // Coin balance and state
   int _coins = 0;
   DateTime? _lastRewardTime;
@@ -44,7 +45,8 @@ class EnhancedWalletService extends ChangeNotifier {
   String? get usedReferralCode => _usedReferralCode;
   bool get isInitialized => _isInitialized;
   List<CoinTransaction> get transactions => List.unmodifiable(_transactions);
-  List<UserPremiumFeature> get premiumFeatures => List.unmodifiable(_premiumFeatures);
+  List<UserPremiumFeature> get premiumFeatures =>
+      List.unmodifiable(_premiumFeatures);
 
   /// Initialize the enhanced wallet service
   Future<void> initialize() async {
@@ -52,36 +54,38 @@ class EnhancedWalletService extends ChangeNotifier {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Load basic wallet data
       _coins = prefs.getInt(_coinsKey) ?? 0;
-      
+
       final lastRewardTimestamp = prefs.getInt(_lastRewardTimeKey);
       if (lastRewardTimestamp != null) {
-        _lastRewardTime = DateTime.fromMillisecondsSinceEpoch(lastRewardTimestamp);
+        _lastRewardTime =
+            DateTime.fromMillisecondsSinceEpoch(lastRewardTimestamp);
       }
-      
+
       final lastDailyLoginTimestamp = prefs.getInt(_lastDailyLoginKey);
       if (lastDailyLoginTimestamp != null) {
-        _lastDailyLogin = DateTime.fromMillisecondsSinceEpoch(lastDailyLoginTimestamp);
+        _lastDailyLogin =
+            DateTime.fromMillisecondsSinceEpoch(lastDailyLoginTimestamp);
       }
-      
+
       _dailyLoginStreak = prefs.getInt(_dailyLoginStreakKey) ?? 0;
       _referralCode = prefs.getString(_referralCodeKey);
       _usedReferralCode = prefs.getString(_usedReferralCodeKey);
-      
+
       // Load transactions
       await _loadTransactions();
-      
+
       // Load premium features
       await _loadPremiumFeatures();
-      
+
       // Generate referral code if not exists
       if (_referralCode == null) {
         _referralCode = _generateReferralCode();
         await prefs.setString(_referralCodeKey, _referralCode!);
       }
-      
+
       _isInitialized = true;
       notifyListeners();
     } catch (e) {
@@ -91,7 +95,8 @@ class EnhancedWalletService extends ChangeNotifier {
   }
 
   /// Add coins to wallet with transaction tracking
-  Future<bool> addCoins(int amount, {
+  Future<bool> addCoins(
+    int amount, {
     required TransactionType type,
     String description = '',
     Map<String, dynamic> metadata = const {},
@@ -103,10 +108,10 @@ class EnhancedWalletService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final oldBalance = _coins;
       _coins += amount;
-      
+
       // Save new balance
       await prefs.setInt(_coinsKey, _coins);
-      
+
       // Create and save transaction
       final transaction = CoinTransaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -119,11 +124,12 @@ class EnhancedWalletService extends ChangeNotifier {
         timestamp: DateTime.now(),
         referenceId: referenceId,
       );
-      
+
       _transactions.add(transaction);
       await _saveTransactions();
-      
-      debugPrint('Added $amount coins from ${type.toString().split('.').last}. New balance: $_coins');
+
+      debugPrint(
+          'Added $amount coins from ${type.toString().split('.').last}. New balance: $_coins');
       notifyListeners();
       return true;
     } catch (e) {
@@ -133,7 +139,8 @@ class EnhancedWalletService extends ChangeNotifier {
   }
 
   /// Remove coins from wallet with transaction tracking
-  Future<bool> removeCoins(int amount, {
+  Future<bool> removeCoins(
+    int amount, {
     required TransactionType type,
     String description = '',
     Map<String, dynamic> metadata = const {},
@@ -145,10 +152,10 @@ class EnhancedWalletService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final oldBalance = _coins;
       _coins -= amount;
-      
+
       // Save new balance
       await prefs.setInt(_coinsKey, _coins);
-      
+
       // Create and save transaction
       final transaction = CoinTransaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -161,11 +168,12 @@ class EnhancedWalletService extends ChangeNotifier {
         metadata: metadata,
         referenceId: referenceId,
       );
-      
+
       _transactions.add(transaction);
       await _saveTransactions();
-      
-      debugPrint('Removed $amount coins for ${type.toString().split('.').last}. New balance: $_coins');
+
+      debugPrint(
+          'Removed $amount coins for ${type.toString().split('.').last}. New balance: $_coins');
       notifyListeners();
       return true;
     } catch (e) {
@@ -179,26 +187,28 @@ class EnhancedWalletService extends ChangeNotifier {
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      
+
       // Check if already claimed today
       if (_lastDailyLogin != null) {
-        final lastLogin = DateTime(_lastDailyLogin!.year, _lastDailyLogin!.month, _lastDailyLogin!.day);
+        final lastLogin = DateTime(_lastDailyLogin!.year,
+            _lastDailyLogin!.month, _lastDailyLogin!.day);
         if (lastLogin.isAtSameMomentAs(today)) {
           return false; // Already claimed today
         }
       }
-      
+
       // Check if it's consecutive day
       bool isConsecutive = false;
       if (_lastDailyLogin != null) {
-        final lastLogin = DateTime(_lastDailyLogin!.year, _lastDailyLogin!.month, _lastDailyLogin!.day);
+        final lastLogin = DateTime(_lastDailyLogin!.year,
+            _lastDailyLogin!.month, _lastDailyLogin!.day);
         final yesterday = today.subtract(const Duration(days: 1));
         isConsecutive = lastLogin.isAtSameMomentAs(yesterday);
       }
-      
+
       // Calculate bonus based on streak
       int bonusAmount = _calculateDailyLoginBonus();
-      
+
       // Add coins
       final success = await addCoins(
         bonusAmount,
@@ -209,7 +219,7 @@ class EnhancedWalletService extends ChangeNotifier {
           'isConsecutive': isConsecutive,
         },
       );
-      
+
       if (success) {
         // Update streak and last login
         if (isConsecutive) {
@@ -217,17 +227,17 @@ class EnhancedWalletService extends ChangeNotifier {
         } else {
           _dailyLoginStreak = 1;
         }
-        
+
         _lastDailyLogin = now;
-        
+
         // Save to preferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt(_lastDailyLoginKey, now.millisecondsSinceEpoch);
         await prefs.setInt(_dailyLoginStreakKey, _dailyLoginStreak);
-        
+
         notifyListeners();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error claiming daily login bonus: $e');
@@ -246,27 +256,29 @@ class EnhancedWalletService extends ChangeNotifier {
   /// Check if daily login bonus is available
   bool get canClaimDailyLoginBonus {
     if (_lastDailyLogin == null) return true;
-    
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final lastLogin = DateTime(_lastDailyLogin!.year, _lastDailyLogin!.month, _lastDailyLogin!.day);
-    
+    final lastLogin = DateTime(
+        _lastDailyLogin!.year, _lastDailyLogin!.month, _lastDailyLogin!.day);
+
     return !lastLogin.isAtSameMomentAs(today);
   }
 
   /// Get time until next daily login bonus
   Duration? get timeUntilNextDailyLogin {
     if (_lastDailyLogin == null) return Duration.zero;
-    
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final lastLogin = DateTime(_lastDailyLogin!.year, _lastDailyLogin!.month, _lastDailyLogin!.day);
-    
+    final lastLogin = DateTime(
+        _lastDailyLogin!.year, _lastDailyLogin!.month, _lastDailyLogin!.day);
+
     if (lastLogin.isAtSameMomentAs(today)) {
       final tomorrow = today.add(const Duration(days: 1));
       return tomorrow.difference(now);
     }
-    
+
     return Duration.zero;
   }
 
@@ -276,11 +288,11 @@ class EnhancedWalletService extends ChangeNotifier {
       if (_usedReferralCode != null) {
         return false; // Already used a referral code
       }
-      
+
       // TODO: Validate referral code with backend
       // For now, simulate validation
       if (code.length < 6) return false;
-      
+
       // Add referral bonus
       const referralBonus = 100; // 100 coins for using referral code
       final success = await addCoins(
@@ -292,14 +304,14 @@ class EnhancedWalletService extends ChangeNotifier {
           'bonusType': 'code_usage',
         },
       );
-      
+
       if (success) {
         _usedReferralCode = code;
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_usedReferralCodeKey, code);
         notifyListeners();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error using referral code: $e');
@@ -321,7 +333,7 @@ class EnhancedWalletService extends ChangeNotifier {
         },
         referenceId: referredUserId,
       );
-      
+
       return success;
     } catch (e) {
       debugPrint('Error giving referral bonus: $e');
@@ -344,7 +356,7 @@ class EnhancedWalletService extends ChangeNotifier {
         },
         referenceId: achievement.id,
       );
-      
+
       return success;
     } catch (e) {
       debugPrint('Error giving achievement bonus: $e');
@@ -372,9 +384,9 @@ class EnhancedWalletService extends ChangeNotifier {
           difficultyBonus = 10;
           break;
       }
-      
+
       final bonusAmount = 10 + score + difficultyBonus;
-      
+
       final success = await addCoins(
         bonusAmount,
         type: TransactionType.quizCompletion,
@@ -387,7 +399,7 @@ class EnhancedWalletService extends ChangeNotifier {
           'difficultyBonus': difficultyBonus,
         },
       );
-      
+
       return success;
     } catch (e) {
       debugPrint('Error giving quiz completion bonus: $e');
@@ -399,7 +411,7 @@ class EnhancedWalletService extends ChangeNotifier {
   Future<bool> unlockPremiumFeature(PremiumFeature feature) async {
     try {
       if (_coins < feature.coinCost) return false;
-      
+
       // Remove coins
       final success = await removeCoins(
         feature.coinCost,
@@ -413,7 +425,7 @@ class EnhancedWalletService extends ChangeNotifier {
         },
         referenceId: feature.id,
       );
-      
+
       if (success) {
         // Add premium feature
         final userFeature = UserPremiumFeature(
@@ -422,17 +434,17 @@ class EnhancedWalletService extends ChangeNotifier {
           featureId: feature.id,
           status: FeatureStatus.unlocked,
           unlockedAt: DateTime.now(),
-          expiresAt: feature.duration != null 
+          expiresAt: feature.duration != null
               ? DateTime.now().add(feature.duration!)
               : null,
           coinCost: feature.coinCost,
         );
-        
+
         _premiumFeatures.add(userFeature);
         await _savePremiumFeatures();
         notifyListeners();
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Error unlocking premium feature: $e');
@@ -453,7 +465,7 @@ class EnhancedWalletService extends ChangeNotifier {
         coinCost: 0,
       ),
     );
-    
+
     return feature.isActive;
   }
 
@@ -474,12 +486,12 @@ class EnhancedWalletService extends ChangeNotifier {
         'spendingByType': {},
       };
     }
-    
+
     int totalEarned = 0;
     int totalSpent = 0;
     Map<String, int> earningsByType = {};
     Map<String, int> spendingByType = {};
-    
+
     for (final transaction in _transactions) {
       if (transaction.isPositive) {
         totalEarned += transaction.amount;
@@ -491,7 +503,7 @@ class EnhancedWalletService extends ChangeNotifier {
         spendingByType[type] = (spendingByType[type] ?? 0) + transaction.amount;
       }
     }
-    
+
     return {
       'totalEarned': totalEarned,
       'totalSpent': totalSpent,
@@ -508,10 +520,11 @@ class EnhancedWalletService extends ChangeNotifier {
   }
 
   /// Get transactions by date range
-  List<CoinTransaction> getTransactionsByDateRange(DateTime start, DateTime end) {
-    return _transactions.where((t) => 
-      t.timestamp.isAfter(start) && t.timestamp.isBefore(end)
-    ).toList();
+  List<CoinTransaction> getTransactionsByDateRange(
+      DateTime start, DateTime end) {
+    return _transactions
+        .where((t) => t.timestamp.isAfter(start) && t.timestamp.isBefore(end))
+        .toList();
   }
 
   /// Load transactions from storage
@@ -519,14 +532,13 @@ class EnhancedWalletService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final transactionsJson = prefs.getStringList(_transactionsKey) ?? [];
-      
+
       _transactions = transactionsJson
           .map((json) => CoinTransaction.fromJson(Map<String, dynamic>.from(
-            Map.fromEntries(json.split(',').map((entry) {
-              final parts = entry.split(':');
-              return MapEntry(parts[0], parts[1]);
-            }))
-          )))
+                  Map.fromEntries(json.split(',').map((entry) {
+                final parts = entry.split(':');
+                return MapEntry(parts[0], parts[1]);
+              })))))
           .toList();
     } catch (e) {
       debugPrint('Error loading transactions: $e');
@@ -539,11 +551,10 @@ class EnhancedWalletService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final transactionsJson = _transactions
-          .map((t) => t.toJson().entries
-              .map((e) => '${e.key}:${e.value}')
-              .join(','))
+          .map((t) =>
+              t.toJson().entries.map((e) => '${e.key}:${e.value}').join(','))
           .toList();
-      
+
       await prefs.setStringList(_transactionsKey, transactionsJson);
     } catch (e) {
       debugPrint('Error saving transactions: $e');
@@ -555,14 +566,13 @@ class EnhancedWalletService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final featuresJson = prefs.getStringList(_premiumFeaturesKey) ?? [];
-      
+
       _premiumFeatures = featuresJson
           .map((json) => UserPremiumFeature.fromJson(Map<String, dynamic>.from(
-            Map.fromEntries(json.split(',').map((entry) {
-              final parts = entry.split(':');
-              return MapEntry(parts[0], parts[1]);
-            }))
-          )))
+                  Map.fromEntries(json.split(',').map((entry) {
+                final parts = entry.split(':');
+                return MapEntry(parts[0], parts[1]);
+              })))))
           .toList();
     } catch (e) {
       debugPrint('Error loading premium features: $e');
@@ -575,11 +585,10 @@ class EnhancedWalletService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final featuresJson = _premiumFeatures
-          .map((f) => f.toJson().entries
-              .map((e) => '${e.key}:${e.value}')
-              .join(','))
+          .map((f) =>
+              f.toJson().entries.map((e) => '${e.key}:${e.value}').join(','))
           .toList();
-      
+
       await prefs.setStringList(_premiumFeaturesKey, featuresJson);
     } catch (e) {
       debugPrint('Error saving premium features: $e');
@@ -590,9 +599,8 @@ class EnhancedWalletService extends ChangeNotifier {
   String _generateReferralCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = Random();
-    return String.fromCharCodes(
-      Iterable.generate(8, (_) => chars.codeUnitAt(random.nextInt(chars.length)))
-    );
+    return String.fromCharCodes(Iterable.generate(
+        8, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
   /// Reset wallet (for testing)
@@ -605,14 +613,14 @@ class EnhancedWalletService extends ChangeNotifier {
       _dailyLoginStreak = 0;
       _transactions.clear();
       _premiumFeatures.clear();
-      
+
       await prefs.remove(_coinsKey);
       await prefs.remove(_lastRewardTimeKey);
       await prefs.remove(_lastDailyLoginKey);
       await prefs.remove(_dailyLoginStreakKey);
       await prefs.remove(_transactionsKey);
       await prefs.remove(_premiumFeaturesKey);
-      
+
       debugPrint('Enhanced wallet reset. New balance: $_coins');
       notifyListeners();
     } catch (e) {
@@ -623,7 +631,7 @@ class EnhancedWalletService extends ChangeNotifier {
   /// Get comprehensive wallet statistics
   Map<String, dynamic> get comprehensiveStats {
     final transactionStats = this.transactionStats;
-    
+
     return {
       ...transactionStats,
       'currentBalance': _coins,

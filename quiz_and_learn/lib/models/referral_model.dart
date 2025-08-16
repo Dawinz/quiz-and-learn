@@ -1,9 +1,4 @@
-enum ReferralStatus {
-  pending,
-  completed,
-  expired,
-  cancelled
-}
+enum ReferralStatus { pending, completed, expired, cancelled }
 
 class ReferralModel {
   final String id;
@@ -39,8 +34,8 @@ class ReferralModel {
       ),
       bonusAmount: json['bonusAmount'],
       createdAt: DateTime.parse(json['createdAt']),
-      completedAt: json['completedAt'] != null 
-          ? DateTime.parse(json['completedAt']) 
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'])
           : null,
       metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
     );
@@ -100,7 +95,7 @@ class ReferralModel {
     final expiryDate = createdAt.add(const Duration(days: 30));
     final now = DateTime.now();
     if (now.isAfter(expiryDate)) return 0;
-    
+
     final difference = expiryDate.difference(now);
     return difference.inDays;
   }
@@ -166,9 +161,8 @@ class ReferralCode {
       maxUses: json['maxUses'] ?? -1,
       currentUses: json['currentUses'] ?? 0,
       createdAt: DateTime.parse(json['createdAt']),
-      expiresAt: json['expiresAt'] != null 
-          ? DateTime.parse(json['expiresAt']) 
-          : null,
+      expiresAt:
+          json['expiresAt'] != null ? DateTime.parse(json['expiresAt']) : null,
       isActive: json['isActive'] ?? true,
     );
   }
@@ -232,7 +226,7 @@ class ReferralCode {
   String get expiryStatus {
     if (expiresAt == null) return 'Never expires';
     if (isExpired) return 'Expired';
-    
+
     final daysLeft = expiresAt!.difference(DateTime.now()).inDays;
     if (daysLeft == 0) return 'Expires today';
     if (daysLeft == 1) return 'Expires tomorrow';

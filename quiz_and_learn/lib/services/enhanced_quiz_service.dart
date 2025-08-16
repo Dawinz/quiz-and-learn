@@ -1,17 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/quiz_question.dart';
-import '../models/quiz_history.dart';
-import '../models/quiz_streak.dart';
-import '../models/quiz_achievement.dart';
-import 'quiz_database_service.dart';
 
 class EnhancedQuizService extends ChangeNotifier {
   static final EnhancedQuizService _instance = EnhancedQuizService._internal();
   factory EnhancedQuizService() => _instance;
   EnhancedQuizService._internal();
-
-  final QuizDatabaseService _databaseService = QuizDatabaseService();
 
   // Quiz session management
   QuizSession? _currentSession;
@@ -31,34 +25,33 @@ class EnhancedQuizService extends ChangeNotifier {
   bool _isTimerActive = false;
 
   // Progress tracking
-  List<QuizAnswer> _currentAnswers = [];
+  List<Map<String, dynamic>> _currentAnswers = [];
   Map<String, dynamic> _sessionStats = {};
 
   // User data
   String? _currentUserId;
-  QuizStreak? _userStreak;
-  List<QuizAchievement> _userAchievements = [];
 
   // Getters
   QuizSession? get currentSession => _currentSession;
   QuizQuestion? get currentQuestion {
-    if (_currentQuestions.isEmpty || _currentQuestionIndex >= _currentQuestions.length) {
+    if (_currentQuestions.isEmpty ||
+        _currentQuestionIndex >= _currentQuestions.length) {
       return null;
     }
     return _currentQuestions[_currentQuestionIndex];
   }
-  
+
   double get progress {
     if (_currentQuestions.isEmpty) return 0.0;
     return (_currentQuestionIndex + 1) / _currentQuestions.length;
   }
-  
+
   int get score => _score;
   int get totalPoints => _totalPoints;
   int get quizTimeRemaining => _quizTimeRemaining;
   int get questionTimeRemaining => _questionTimeRemaining;
   bool get isTimerActive => _isTimerActive;
-  
+
   Duration? get timeElapsed {
     if (_startTime == null) return null;
     final endTime = _endTime ?? DateTime.now();
@@ -71,30 +64,11 @@ class EnhancedQuizService extends ChangeNotifier {
   }
 
   Map<String, dynamic> get sessionStats => _sessionStats;
-  QuizStreak? get userStreak => _userStreak;
-  List<QuizAchievement> get userAchievements => _userAchievements;
 
   // Set current user
   void setCurrentUser(String userId) {
     _currentUserId = userId;
-    _loadUserData();
-  }
-
-  // Load user data
-  Future<void> _loadUserData() async {
-    if (_currentUserId == null) return;
-    
-    try {
-      // TODO: Implement when database methods are available
-      // _userStreak = await _databaseService.getUserStreak(_currentUserId!);
-      // _userAchievements = await _databaseService.getUserAchievements(_currentUserId!);
-      
-      notifyListeners();
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error loading user data: $e');
-      }
-    }
+    notifyListeners();
   }
 
   // Start quiz with timer
@@ -106,15 +80,13 @@ class EnhancedQuizService extends ChangeNotifier {
     int questionTimeLimit = 0, // 0 for no limit
   }) async {
     try {
-      // Get questions from database
-      _currentQuestions = _databaseService.getQuestionsByCategoryAndDifficulty(
-        category,
-        difficulty,
-        limit: questionCount,
-      );
+      // Get placeholder questions for now
+      _currentQuestions =
+          _generatePlaceholderQuestions(category, difficulty, questionCount);
 
       if (_currentQuestions.isEmpty) {
-        throw Exception('No questions available for the selected category and difficulty');
+        throw Exception(
+            'No questions available for the selected category and difficulty');
       }
 
       // Initialize quiz session
@@ -150,7 +122,6 @@ class EnhancedQuizService extends ChangeNotifier {
       _isTimerActive = true;
       _updateSessionStats();
       notifyListeners();
-
     } catch (e) {
       if (kDebugMode) {
         print('Error starting quiz: $e');
@@ -159,10 +130,41 @@ class EnhancedQuizService extends ChangeNotifier {
     }
   }
 
+  // Generate placeholder questions
+  List<QuizQuestion> _generatePlaceholderQuestions(
+      QuizCategory category, QuizDifficulty difficulty, int count) {
+    final questions = <QuizQuestion>[];
+
+    for (int i = 0; i < count; i++) {
+      questions.add(QuizQuestion(
+        id: 'placeholder_${category.name}_${difficulty.name}_$i',
+        question:
+            'Sample question ${i + 1} for ${category.name} (${difficulty.name})?',
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        correctAnswer: 0,
+        explanation: 'This is a placeholder question for testing purposes.',
+        category: category,
+        difficulty: difficulty,
+        points: difficulty == QuizDifficulty.easy
+            ? 10
+            : difficulty == QuizDifficulty.medium
+                ? 20
+                : 30,
+        tags: ['placeholder', category.name, difficulty.name],
+      ));
+    }
+
+    return questions;
+  }
+
   // Start quiz timer
   void _startQuizTimer() {
     _quizTimer?.cancel();
     _quizTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!_isTimerActive) {
+        timer.cancel();
+        return;
+      }
       if (_quizTimeRemaining > 0) {
         _quizTimeRemaining--;
         notifyListeners();
@@ -178,6 +180,10 @@ class EnhancedQuizService extends ChangeNotifier {
     _questionTimer?.cancel();
     _questionStartTime = DateTime.now();
     _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!_isTimerActive) {
+        timer.cancel();
+        return;
+      }
       if (_questionTimeRemaining > 0) {
         _questionTimeRemaining--;
         notifyListeners();
@@ -198,7 +204,8 @@ class EnhancedQuizService extends ChangeNotifier {
   }
 
   // Submit answer
-  Future<void> submitAnswer(int selectedAnswer, {bool autoSubmit = false}) async {
+  Future<void> submitAnswer(int selectedAnswer,
+      {bool autoSubmit = false}) async {
     if (currentQuestion == null) return;
 
     final question = currentQuestion!;
@@ -218,15 +225,15 @@ class EnhancedQuizService extends ChangeNotifier {
     _totalPoints += question.points;
 
     // Record answer
-    final answer = QuizAnswer(
-      questionId: question.id,
-      question: question.question,
-      selectedAnswer: selectedAnswer,
-      correctAnswer: question.correctAnswer,
-      isCorrect: isCorrect,
-      timeSpent: timeSpent,
-      options: question.options,
-    );
+    final answer = {
+      'questionId': question.id,
+      'question': question.question,
+      'selectedAnswer': selectedAnswer,
+      'correctAnswer': question.correctAnswer,
+      'isCorrect': isCorrect,
+      'timeSpent': timeSpent.inSeconds,
+      'options': question.options,
+    };
     _currentAnswers.add(answer);
 
     // Stop question timer
@@ -235,14 +242,11 @@ class EnhancedQuizService extends ChangeNotifier {
     // Update session stats
     _updateSessionStats();
 
-    // Check for achievements
-    await _checkAchievements();
-
     notifyListeners();
 
     // Wait before moving to next question
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (_currentQuestionIndex < _currentQuestions.length - 1) {
       nextQuestion();
     } else {
@@ -254,13 +258,14 @@ class EnhancedQuizService extends ChangeNotifier {
   bool nextQuestion() {
     if (_currentQuestionIndex < _currentQuestions.length - 1) {
       _currentQuestionIndex++;
-      
+
       // Reset question timer if enabled
-      if (_currentSession?.questionTimeLimit != null && _currentSession!.questionTimeLimit! > 0) {
+      if (_currentSession?.questionTimeLimit != null &&
+          _currentSession!.questionTimeLimit! > 0) {
         _questionTimeRemaining = _currentSession!.questionTimeLimit!;
         _startQuestionTimer();
       }
-      
+
       _updateSessionStats();
       notifyListeners();
       return true;
@@ -275,203 +280,10 @@ class EnhancedQuizService extends ChangeNotifier {
     _questionTimer?.cancel();
     _endTime = DateTime.now();
 
-    // Save quiz history
-    if (_currentUserId != null) {
-      await _saveQuizHistory();
-    }
-
-    // Update user streak
-    await _updateUserStreak();
-
-    // Check for new achievements
-    await _checkAchievements();
+    // Update session stats
+    _updateSessionStats();
 
     notifyListeners();
-  }
-
-  // Save quiz history
-  Future<void> _saveQuizHistory() async {
-    if (_currentUserId == null || _currentSession == null) return;
-
-    final history = QuizHistory(
-      id: _currentSession!.id,
-      userId: _currentUserId!,
-      category: _currentSession!.category.toString().split('.').last,
-      difficulty: _currentSession!.difficulty,
-      score: _score,
-      totalQuestions: _currentQuestions.length,
-      correctAnswers: _currentAnswers.where((a) => a.isCorrect).length,
-      accuracy: (_score / _totalPoints) * 100,
-      timeTaken: timeElapsed ?? Duration.zero,
-      completedAt: DateTime.now(),
-      answers: _currentAnswers,
-      pointsEarned: _score,
-      isCompleted: true,
-    );
-
-    // TODO: Implement when database methods are available
-    // await _databaseService.saveQuizHistory(history);
-  }
-
-  // Update user streak
-  Future<void> _updateUserStreak() async {
-    if (_currentUserId == null) return;
-
-    try {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-
-      if (_userStreak == null) {
-        // Create new streak
-        _userStreak = QuizStreak(
-          userId: _currentUserId!,
-          currentStreak: 1,
-          longestStreak: 1,
-          totalQuizzesCompleted: 1,
-          lastQuizDate: today,
-          categoryStreaks: {},
-          difficultyStreaks: {},
-          createdAt: now,
-          updatedAt: now,
-        );
-      } else {
-        // Update existing streak
-        final lastQuiz = DateTime(
-          _userStreak!.lastQuizDate.year,
-          _userStreak!.lastQuizDate.month,
-          _userStreak!.lastQuizDate.day,
-        );
-
-        if (lastQuiz.isAtSameMomentAs(today)) {
-          // Already completed a quiz today
-          _userStreak = _userStreak!.copyWith(
-            totalQuizzesCompleted: _userStreak!.totalQuizzesCompleted + 1,
-            updatedAt: now,
-          );
-        } else if (lastQuiz.isAtSameMomentAs(today.subtract(const Duration(days: 1)))) {
-          // Continue streak
-          final newStreak = _userStreak!.currentStreak + 1;
-          _userStreak = _userStreak!.copyWith(
-            currentStreak: newStreak,
-            longestStreak: newStreak > _userStreak!.longestStreak ? newStreak : _userStreak!.longestStreak,
-            totalQuizzesCompleted: _userStreak!.totalQuizzesCompleted + 1,
-            lastQuizDate: today,
-            updatedAt: now,
-          );
-        } else {
-          // Break streak
-          _userStreak = _userStreak!.copyWith(
-            currentStreak: 1,
-            totalQuizzesCompleted: _userStreak!.totalQuizzesCompleted + 1,
-            lastQuizDate: today,
-            updatedAt: now,
-          );
-        }
-      }
-
-      // TODO: Implement when database methods are available
-      // await _databaseService.saveUserStreak(_userStreak!);
-      notifyListeners();
-
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error updating user streak: $e');
-      }
-    }
-  }
-
-  // Check for achievements
-  Future<void> _checkAchievements() async {
-    if (_currentUserId == null) return;
-
-    try {
-      final newAchievements = <QuizAchievement>[];
-
-      for (final achievement in QuizAchievements.all) {
-        if (achievement.isUnlocked) continue;
-
-        bool shouldUnlock = false;
-        int currentValue = 0;
-
-        switch (achievement.type) {
-          case AchievementType.streak:
-            if (_userStreak != null) {
-              currentValue = _userStreak!.currentStreak;
-              shouldUnlock = achievement.canUnlock(currentValue);
-            }
-            break;
-
-          case AchievementType.score:
-            // TODO: Implement when database methods are available
-            currentValue = _score;
-            shouldUnlock = achievement.canUnlock(currentValue);
-            break;
-
-          case AchievementType.category:
-            // TODO: Implement when database methods are available
-            currentValue = 1; // Placeholder
-            shouldUnlock = achievement.canUnlock(currentValue);
-            break;
-
-          case AchievementType.difficulty:
-            // TODO: Implement when database methods are available
-            currentValue = 1; // Placeholder
-            shouldUnlock = achievement.canUnlock(currentValue);
-            break;
-
-          case AchievementType.speed:
-            // Check current question time
-            if (currentQuestionTime != null) {
-              currentValue = currentQuestionTime!.inSeconds;
-              shouldUnlock = achievement.canUnlock(currentValue);
-            }
-            break;
-
-          case AchievementType.accuracy:
-            // Check current quiz accuracy
-            if (_totalPoints > 0) {
-              currentValue = ((_score / _totalPoints) * 100).round();
-              shouldUnlock = achievement.canUnlock(currentValue);
-            }
-            break;
-
-          case AchievementType.special:
-            // Handle special achievements
-            if (achievement.id == 'first_quiz') {
-              currentValue = 1; // Placeholder
-              shouldUnlock = achievement.canUnlock(currentValue);
-            } else if (achievement.id == 'quiz_master') {
-              currentValue = 1; // Placeholder
-              shouldUnlock = achievement.canUnlock(currentValue);
-            }
-            break;
-        }
-
-        if (shouldUnlock) {
-          final unlockedAchievement = achievement.copyWith(
-            isUnlocked: true,
-            unlockedAt: DateTime.now(),
-          );
-          newAchievements.add(unlockedAchievement);
-          
-          // Add to user achievements
-          _userAchievements.add(unlockedAchievement);
-          
-          // TODO: Implement when database methods are available
-          // await _databaseService.saveUserAchievement(_currentUserId!, unlockedAchievement);
-        }
-      }
-
-      if (newAchievements.isNotEmpty) {
-        notifyListeners();
-        // You can show achievement notifications here
-      }
-
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error checking achievements: $e');
-      }
-    }
   }
 
   // Update session stats
@@ -491,16 +303,17 @@ class EnhancedQuizService extends ChangeNotifier {
   }
 
   // Get quiz results
-  QuizResults getResults() {
-    return QuizResults(
-      score: _score,
-      totalQuestions: _currentQuestions.length,
-      correctAnswers: _currentAnswers.where((a) => a.isCorrect).length,
-      accuracy: _totalPoints > 0 ? (_score / _totalPoints) * 100 : 0.0,
-      timeTaken: timeElapsed ?? Duration.zero,
-      answers: _currentAnswers,
-      pointsEarned: _score,
-    );
+  Map<String, dynamic> getResults() {
+    return {
+      'score': _score,
+      'totalQuestions': _currentQuestions.length,
+      'correctAnswers':
+          _currentAnswers.where((a) => a['isCorrect'] == true).length,
+      'accuracy': _totalPoints > 0 ? (_score / _totalPoints) * 100 : 0.0,
+      'timeTaken': timeElapsed?.inSeconds ?? 0,
+      'answers': _currentAnswers,
+      'pointsEarned': _score,
+    };
   }
 
   // Pause quiz
@@ -515,15 +328,19 @@ class EnhancedQuizService extends ChangeNotifier {
   void resumeQuiz() {
     if (_currentSession != null) {
       _isTimerActive = true;
-      
-      if (_currentSession!.timeLimit != null && _currentSession!.timeLimit! > 0 && _quizTimeRemaining > 0) {
+
+      if (_currentSession!.timeLimit != null &&
+          _currentSession!.timeLimit! > 0 &&
+          _quizTimeRemaining > 0) {
         _startQuizTimer();
       }
-      
-      if (_currentSession!.questionTimeLimit != null && _currentSession!.questionTimeLimit! > 0 && _questionTimeRemaining > 0) {
+
+      if (_currentSession!.questionTimeLimit != null &&
+          _currentSession!.questionTimeLimit! > 0 &&
+          _questionTimeRemaining > 0) {
         _startQuestionTimer();
       }
-      
+
       notifyListeners();
     }
   }
@@ -552,6 +369,7 @@ class EnhancedQuizService extends ChangeNotifier {
   void dispose() {
     _quizTimer?.cancel();
     _questionTimer?.cancel();
+    _isTimerActive = false;
     super.dispose();
   }
 }
@@ -574,26 +392,5 @@ class QuizSession {
     required this.questionCount,
     this.timeLimit,
     this.questionTimeLimit,
-  });
-}
-
-// Quiz results class
-class QuizResults {
-  final int score;
-  final int totalQuestions;
-  final int correctAnswers;
-  final double accuracy;
-  final Duration timeTaken;
-  final List<QuizAnswer> answers;
-  final int pointsEarned;
-
-  const QuizResults({
-    required this.score,
-    required this.totalQuestions,
-    required this.correctAnswers,
-    required this.accuracy,
-    required this.timeTaken,
-    required this.answers,
-    required this.pointsEarned,
   });
 }

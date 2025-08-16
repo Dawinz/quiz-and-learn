@@ -30,13 +30,13 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
 
     try {
       await _walletService.initialize();
-      
+
       // For now, create sample data
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _availableFeatures = _getSampleFeatures();
       _userFeatures = _getSampleUserFeatures();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -139,7 +139,9 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
     if (_selectedCategory == 'all') {
       return _availableFeatures;
     }
-    return _availableFeatures.where((f) => f.category == _selectedCategory).toList();
+    return _availableFeatures
+        .where((f) => f.category == _selectedCategory)
+        .toList();
   }
 
   bool _isFeatureUnlocked(String featureId) {
@@ -157,7 +159,7 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
   Future<void> _unlockFeature(PremiumFeature feature) async {
     try {
       final success = await _walletService.unlockPremiumFeature(feature);
-      
+
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -276,7 +278,10 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withOpacity(0.8)
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -330,8 +335,10 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                           children: [
                             _buildFilterChip('all', 'All'),
                             _buildFilterChip('Quiz Features', 'Quiz Features'),
-                            _buildFilterChip('User Experience', 'User Experience'),
-                            _buildFilterChip('Premium Services', 'Premium Services'),
+                            _buildFilterChip(
+                                'User Experience', 'User Experience'),
+                            _buildFilterChip(
+                                'Premium Services', 'Premium Services'),
                           ],
                         ),
                       ),
@@ -359,7 +366,7 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
 
   Widget _buildFilterChip(String value, String label) {
     final isSelected = _selectedCategory == value;
-    
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
@@ -394,7 +401,7 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
       elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isUnlocked 
+        side: isUnlocked
             ? BorderSide(color: AppColors.primary, width: 2)
             : BorderSide.none,
       ),
@@ -426,7 +433,7 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: isUnlocked 
+                      color: isUnlocked
                           ? AppColors.primary.withOpacity(0.2)
                           : Colors.grey.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(30),
@@ -438,9 +445,9 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 16),
-                  
+
                   // Feature Info
                   Expanded(
                     child: Column(
@@ -451,7 +458,9 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isUnlocked ? AppColors.primary : AppColors.onBackground,
+                            color: isUnlocked
+                                ? AppColors.primary
+                                : AppColors.onBackground,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -467,11 +476,12 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Status Badge
                   if (isUnlocked)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
@@ -487,16 +497,17 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                     ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Feature Details
               Row(
                 children: [
                   // Duration
                   Row(
                     children: [
-                      Icon(Icons.access_time, color: Colors.grey[600], size: 16),
+                      Icon(Icons.access_time,
+                          color: Colors.grey[600], size: 16),
                       const SizedBox(width: 4),
                       Text(
                         feature.formattedDuration,
@@ -507,9 +518,9 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(width: 16),
-                  
+
                   // Category
                   Row(
                     children: [
@@ -524,22 +535,24 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const Spacer(),
-                  
+
                   // Price or Status
                   if (isUnlocked && userFeature != null)
                     Text(
                       userFeature.expiryStatus,
                       style: TextStyle(
                         fontSize: 12,
-                        color: userFeature.isExpired ? Colors.red : Colors.green,
+                        color:
+                            userFeature.isExpired ? Colors.red : Colors.green,
                         fontWeight: FontWeight.bold,
                       ),
                     )
                   else
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(16),
@@ -555,7 +568,7 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                     ),
                 ],
               ),
-              
+
               // Action Button
               if (!isUnlocked) ...[
                 const SizedBox(height: 16),
@@ -564,7 +577,8 @@ class _PremiumFeaturesScreenState extends State<PremiumFeaturesScreen> {
                   child: ElevatedButton(
                     onPressed: canAfford ? () => _unlockFeature(feature) : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: canAfford ? AppColors.primary : Colors.grey,
+                      backgroundColor:
+                          canAfford ? AppColors.primary : Colors.grey,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(

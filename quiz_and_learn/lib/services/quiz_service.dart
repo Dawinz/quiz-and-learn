@@ -1,5 +1,4 @@
 import '../models/quiz_question.dart';
-import 'quiz_database_service.dart';
 import 'admob_service.dart';
 import 'ad_policy_compliance_service.dart';
 import 'package:flutter/foundation.dart';
@@ -11,7 +10,6 @@ class QuizService {
     _initializePolicyService();
   }
 
-  final QuizDatabaseService _databaseService = QuizDatabaseService();
   final AdMobService _adMobService = AdMobService.instance;
   final AdPolicyComplianceService _policyService =
       AdPolicyComplianceService.instance;
@@ -28,8 +26,6 @@ class QuizService {
   void _initializePolicyService() {
     _policyService.initialize();
   }
-
-  // Ad management - now handled by AdPolicyComplianceService
 
   // Get current session
   QuizSession? get currentSession => _currentSession;
@@ -85,228 +81,168 @@ class QuizService {
     };
   }
 
-  // Get available question counts
+  // Get available question counts (simplified)
   Map<String, int> get availableQuestionCounts {
     return {
-      'total': _databaseService.getTotalQuestionCount(),
-      'easy':
-          _databaseService.getQuestionCountByDifficulty(QuizDifficulty.easy),
-      'medium':
-          _databaseService.getQuestionCountByDifficulty(QuizDifficulty.medium),
-      'hard':
-          _databaseService.getQuestionCountByDifficulty(QuizDifficulty.hard),
+      'total': 0, // Will be populated from backend
+      'easy': 0,
+      'medium': 0,
+      'hard': 0,
     };
   }
 
   // Start a new quiz session
-  void startQuiz({
-    required QuizCategory category,
+  Future<void> startQuiz({
+    required String category,
     required QuizDifficulty difficulty,
-    int questionCount = 10,
-  }) {
-    _currentQuestions = _databaseService.getQuestionsByCategoryAndDifficulty(
-      category,
-      difficulty,
-      limit: questionCount,
-    );
+    required int questionCount,
+  }) async {
+    try {
+      // Reset session state
+      _currentQuestionIndex = 0;
+      _score = 0;
+      _totalPoints = 0;
+      _startTime = DateTime.now();
+      _endTime = null;
 
-    if (_currentQuestions.isEmpty) {
-      // Fallback: try to get questions by category only
-      _currentQuestions = _databaseService.getQuestionsByCategory(
-        category,
-        limit: questionCount,
+      // Create new session
+      _currentSession = QuizSession(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        category: category,
+        difficulty: difficulty,
+        questionCount: questionCount,
+        startTime: _startTime!,
+        status: QuizSessionStatus.inProgress,
+      );
+
+      // For now, we'll use placeholder questions
+      // In a real app, these would come from the backend
+      _currentQuestions = _generatePlaceholderQuestions(questionCount, difficulty);
+
+      print('✅ Quiz started: $category - $difficulty');
+    } catch (e) {
+      print('❌ Failed to start quiz: $e');
+      rethrow;
+    }
+  }
+
+  // Generate placeholder questions for testing
+  List<QuizQuestion> _generatePlaceholderQuestions(int count, QuizDifficulty difficulty) {
+    final questions = <QuizQuestion>[];
+    
+    for (int i = 0; i < count; i++) {
+      questions.add(QuizQuestion(
+        id: 'placeholder_$i',
+        question: 'Sample question ${i + 1}?',
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        correctAnswer: 0,
+        explanation: 'This is a placeholder question for testing.',
+        difficulty: difficulty,
+        category: QuizCategory.general,
+        points: _getPointsForDifficulty(difficulty),
+        tags: ['placeholder', 'test'],
+      ));
+    }
+    
+    return questions;
+  }
+
+  // Get points for difficulty level
+  int _getPointsForDifficulty(QuizDifficulty difficulty) {
+    switch (difficulty) {
+      case QuizDifficulty.easy:
+        return 10;
+      case QuizDifficulty.medium:
+        return 20;
+      case QuizDifficulty.hard:
+        return 30;
+      default:
+        return 10;
+    }
+  }
+
+  // Submit answer for current question
+  Future<bool> submitAnswer(int selectedAnswer) async {
+    if (currentQuestion == null) return false;
+
+    try {
+      final isCorrect = selectedAnswer == currentQuestion!.correctAnswer;
+      
+      if (isCorrect) {
+        _score += currentQuestion!.points;
+      }
+      _totalPoints += currentQuestion!.points;
+
+      // Move to next question
+      _currentQuestionIndex++;
+
+      // Check if quiz is complete
+      if (_currentQuestionIndex >= _currentQuestions.length) {
+        await _completeQuiz();
+      }
+
+      return isCorrect;
+    } catch (e) {
+      print('❌ Error submitting answer: $e');
+      return false;
+    }
+  }
+
+  // Complete the quiz
+  Future<void> _completeQuiz() async {
+    _endTime = DateTime.now();
+    
+    if (_currentSession != null) {
+      _currentSession = _currentSession!.copyWith(
+        status: QuizSessionStatus.completed,
+        endTime: _endTime,
+        score: _score,
+        totalPoints: _totalPoints,
       );
     }
 
-    if (_currentQuestions.isEmpty) {
-      throw Exception(
-          'No questions available for the selected category and difficulty');
-    }
-
-    _currentQuestionIndex = 0;
-    _score = 0;
-    _totalPoints = _currentQuestions.fold(0, (sum, q) => sum + q.points);
-    _startTime = DateTime.now();
-    _endTime = null;
-
-    _currentSession = QuizSession(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      category: category,
-      difficulty: difficulty,
-      totalQuestions: _currentQuestions.length,
-      startTime: _startTime!,
-    );
-
-    // Reset ad counters for new session
-    _resetAdCounters();
+    print('✅ Quiz completed! Score: $_score/$_totalPoints');
   }
 
-  // Start a mixed category quiz
-  void startMixedQuiz({int questionCount = 15}) {
-    _currentQuestions =
-        _databaseService.getRandomQuestions(count: questionCount);
-
-    if (_currentQuestions.isEmpty) {
-      throw Exception('No questions available');
+  // Get next question
+  QuizQuestion? getNextQuestion() {
+    if (_currentQuestionIndex >= _currentQuestions.length) {
+      return null;
     }
-
-    _currentQuestionIndex = 0;
-    _score = 0;
-    _totalPoints = _currentQuestions.fold(0, (sum, q) => sum + q.points);
-    _startTime = DateTime.now();
-    _endTime = null;
-
-    _currentSession = QuizSession(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      category: QuizCategory.general, // Mixed category
-      difficulty: QuizDifficulty.medium, // Mixed difficulty
-      totalQuestions: _currentQuestions.length,
-      startTime: _startTime!,
-    );
-
-    // Reset ad counters for new session
-    _resetAdCounters();
-  }
-
-  // Start a difficulty-based quiz
-  void startDifficultyQuiz({
-    required QuizDifficulty difficulty,
-    int questionCount = 15,
-  }) {
-    _currentQuestions = _databaseService.getQuestionsByDifficulty(
-      difficulty,
-      limit: questionCount,
-    );
-
-    if (_currentQuestions.isEmpty) {
-      throw Exception('No questions available for the selected difficulty');
-    }
-
-    _currentQuestionIndex = 0;
-    _score = 0;
-    _totalPoints = _currentQuestions.fold(0, (sum, q) => sum + q.points);
-    _startTime = DateTime.now();
-    _endTime = null;
-
-    _currentSession = QuizSession(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      category: QuizCategory.general, // Mixed category
-      difficulty: difficulty,
-      totalQuestions: _currentQuestions.length,
-      startTime: _startTime!,
-    );
-
-    // Reset ad counters for new session
-    _resetAdCounters();
-  }
-
-  // Start a tag-based quiz
-  void startTagQuiz({
-    required List<String> tags,
-    int questionCount = 10,
-  }) {
-    _currentQuestions = _databaseService.getQuestionsByTags(
-      tags,
-      limit: questionCount,
-    );
-
-    if (_currentQuestions.isEmpty) {
-      throw Exception('No questions available for the selected tags');
-    }
-
-    _currentQuestionIndex = 0;
-    _score = 0;
-    _totalPoints = _currentQuestions.fold(0, (sum, q) => sum + q.points);
-    _startTime = DateTime.now();
-    _endTime = null;
-
-    _currentSession = QuizSession(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      category: QuizCategory.general, // Mixed category
-      difficulty: QuizDifficulty.medium, // Mixed difficulty
-      totalQuestions: _currentQuestions.length,
-      startTime: _startTime!,
-    );
-
-    // Reset ad counters for new session
-    _resetAdCounters();
-  }
-
-  // Submit an answer
-  bool submitAnswer(int selectedOption) {
-    if (currentQuestion == null) return false;
-
-    final isCorrect = selectedOption == currentQuestion!.correctAnswer;
-
-    if (isCorrect) {
-      _score += currentQuestion!.points;
-    }
-
-    // Record the answer
-    _currentSession?.addAnswer(
-      questionId: currentQuestion!.id,
-      selectedAnswer: selectedOption,
-      isCorrect: isCorrect,
-      points: isCorrect ? currentQuestion!.points : 0,
-    );
-
-    // Trigger ad after question completion
-    triggerAdAfterQuestion();
-
-    return isCorrect;
-  }
-
-  // Move to next question
-  bool nextQuestion() {
-    if (_currentQuestionIndex < _currentQuestions.length - 1) {
-      _currentQuestionIndex++;
-      return true;
-    }
-    return false;
-  }
-
-  // Move to previous question
-  bool previousQuestion() {
-    if (_currentQuestionIndex > 0) {
-      _currentQuestionIndex--;
-      return true;
-    }
-    return false;
+    return _currentQuestions[_currentQuestionIndex];
   }
 
   // Check if quiz is complete
   bool get isQuizComplete {
-    return _currentQuestionIndex >= _currentQuestions.length - 1;
+    return _currentQuestionIndex >= _currentQuestions.length;
   }
 
   // Get quiz results
-  QuizResult getResults() {
-    _endTime = DateTime.now();
-
-    if (_currentSession == null) {
-      throw Exception('No active quiz session');
+  Map<String, dynamic> getQuizResults() {
+    if (!isQuizComplete) {
+      return {
+        'status': 'in_progress',
+        'message': 'Quiz is still in progress',
+      };
     }
 
-    final percentage = (_score / _totalPoints) * 100;
-    final passed = percentage >= 60; // 60% passing score
+    final accuracy = (_score / _totalPoints) * 100;
+    final timeElapsed = this.timeElapsed?.inSeconds ?? 0;
 
-    return QuizResult(
-      sessionId: _currentSession!.id,
-      score: _score,
-      totalPoints: _totalPoints,
-      percentage: percentage,
-      passed: passed,
-      totalQuestions: _currentQuestions.length,
-      correctAnswers: _currentSession!.answers.where((a) => a.isCorrect).length,
-      timeElapsed: timeElapsed ?? Duration.zero,
-      startTime: _startTime!,
-      endTime: _endTime!,
-      category: _currentSession!.category,
-      difficulty: _currentSession!.difficulty,
-    );
+    return {
+      'status': 'completed',
+      'score': _score,
+      'totalPoints': _totalPoints,
+      'accuracy': accuracy,
+      'timeElapsed': timeElapsed,
+      'startTime': _startTime?.toIso8601String(),
+      'endTime': _endTime?.toIso8601String(),
+      'category': _currentSession?.category,
+      'difficulty': _currentSession?.difficulty.toString(),
+    };
   }
 
-  // Reset quiz
+  // Reset quiz session
   void resetQuiz() {
     _currentSession = null;
     _currentQuestions.clear();
@@ -317,223 +253,123 @@ class QuizService {
     _endTime = null;
   }
 
-  // Get available categories
-  List<QuizCategory> getAvailableCategories() {
-    return _databaseService.getAvailableCategories();
+  // Get quiz history (simplified)
+  List<QuizSession> getQuizHistory() {
+    // In a real app, this would come from local storage or backend
+    return [];
   }
 
-  // Get available difficulties
-  List<QuizDifficulty> getAvailableDifficulties() {
-    return _databaseService.getAvailableDifficulties();
+  // Save quiz session (simplified)
+  Future<void> saveQuizSession(QuizSession session) async {
+    // In a real app, this would save to local storage or backend
+    print('📝 Quiz session saved: ${session.id}');
   }
 
-  // Get question count for category and difficulty
-  int getQuestionCount(QuizCategory category, QuizDifficulty difficulty) {
-    final questions = _databaseService.getQuestionsByCategoryAndDifficulty(
-      category,
-      difficulty,
-      limit: 1000, // Get all questions to count them
-    );
-    return questions.length;
-  }
-
-  // Ad Management Methods
-
-  /// Check if it's time to show an ad
-  bool get shouldShowAd {
-    return _policyService.canShowAnyAd() &&
-        _policyService.shouldShowAdAfterQuestion();
-  }
-
-  /// Get the type of ad to show based on context
-  AdType get recommendedAdType {
-    final recommendedType = _policyService.getRecommendedAdType();
-    switch (recommendedType) {
-      case 'interstitial':
-        return AdType.interstitial;
-      case 'rewarded':
-        return AdType.rewarded;
-      case 'banner':
-        return AdType.banner;
-      case 'native':
-        return AdType.native;
-      default:
-        return AdType.interstitial;
-    }
-  }
-
-  /// Trigger ad display after question completion
-  Future<void> triggerAdAfterQuestion() async {
-    _policyService.incrementQuestionCount();
-
-    if (shouldShowAd) {
-      await _showAd();
-    }
-  }
-
-  /// Show the appropriate ad type
-  Future<void> _showAd() async {
-    if (!_adMobService.isInitialized) {
-      await _adMobService.initialize();
-    }
-
-    final adType = recommendedAdType;
-    bool adShown = false;
-
-    try {
-      switch (adType) {
-        case AdType.interstitial:
-          adShown = await _adMobService.showInterstitialBetweenLevels();
-          break;
-        case AdType.rewarded:
-          adShown = await _adMobService.showRewardedAdForCoins();
-          break;
-        case AdType.banner:
-          // Banner ads are handled by UI, not triggered here
-          break;
-        case AdType.native:
-          // Native ads are handled by UI, not triggered here
-          break;
-      }
-
-      if (adShown) {
-        // Record ad display in policy service
-        switch (adType) {
-          case AdType.interstitial:
-            _policyService.recordInterstitialAdShown();
-            break;
-          case AdType.rewarded:
-            _policyService.recordRewardedAdShown();
-            break;
-          case AdType.banner:
-          case AdType.native:
-            // These are handled by UI
-            break;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error showing ad: $e');
-    }
-  }
-
-  /// Reset ad counters for new session
-  void _resetAdCounters() {
-    _policyService.resetCounters();
-  }
-
-  /// Get ad statistics for current session
-  Map<String, dynamic> get adStats {
-    final complianceStatus = _policyService.getComplianceStatus();
+  // Get quiz statistics (simplified)
+  Map<String, dynamic> getQuizStatistics() {
     return {
-      'shouldShowAd': shouldShowAd,
-      'recommendedAdType': recommendedAdType.toString(),
-      'complianceStatus': complianceStatus,
-      'policyWarnings': _policyService.getPolicyWarnings(),
-      'isPolicyCompliant': _policyService.isPolicyCompliant(),
+      'totalQuizzes': 0,
+      'averageScore': 0.0,
+      'bestScore': 0,
+      'totalTime': 0,
+      'categories': {},
+      'difficulties': {},
     };
+  }
+
+  // Dispose resources
+  void dispose() {
+    resetQuiz();
   }
 }
 
+// Quiz Session class
 class QuizSession {
   final String id;
-  final QuizCategory category;
+  final String category;
   final QuizDifficulty difficulty;
-  final int totalQuestions;
+  final int questionCount;
   final DateTime startTime;
-  final List<QuizAnswer> answers = [];
+  final DateTime? endTime;
+  final QuizSessionStatus status;
+  final int? score;
+  final int? totalPoints;
 
   QuizSession({
     required this.id,
     required this.category,
     required this.difficulty,
-    required this.totalQuestions,
+    required this.questionCount,
     required this.startTime,
+    this.endTime,
+    this.status = QuizSessionStatus.inProgress,
+    this.score,
+    this.totalPoints,
   });
 
-  void addAnswer({
-    required String questionId,
-    required int selectedAnswer,
-    required bool isCorrect,
-    required int points,
+  QuizSession copyWith({
+    String? id,
+    String? category,
+    QuizDifficulty? difficulty,
+    int? questionCount,
+    DateTime? startTime,
+    DateTime? endTime,
+    QuizSessionStatus? status,
+    int? score,
+    int? totalPoints,
   }) {
-    answers.add(QuizAnswer(
-      questionId: questionId,
-      selectedAnswer: selectedAnswer,
-      isCorrect: isCorrect,
-      points: points,
-      timestamp: DateTime.now(),
-    ));
+    return QuizSession(
+      id: id ?? this.id,
+      category: category ?? this.category,
+      difficulty: difficulty ?? this.difficulty,
+      questionCount: questionCount ?? this.questionCount,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      status: status ?? this.status,
+      score: score ?? this.score,
+      totalPoints: totalPoints ?? this.totalPoints,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'category': category,
+      'difficulty': difficulty.toString(),
+      'questionCount': questionCount,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
+      'status': status.toString(),
+      'score': score,
+      'totalPoints': totalPoints,
+    };
+  }
+
+  factory QuizSession.fromMap(Map<String, dynamic> map) {
+    return QuizSession(
+      id: map['id'] ?? '',
+      category: map['category'] ?? '',
+      difficulty: QuizDifficulty.values.firstWhere(
+        (e) => e.toString() == map['difficulty'],
+        orElse: () => QuizDifficulty.easy,
+      ),
+      questionCount: map['questionCount'] ?? 0,
+      startTime: DateTime.parse(map['startTime']),
+      endTime: map['endTime'] != null ? DateTime.parse(map['endTime']) : null,
+      status: QuizSessionStatus.values.firstWhere(
+        (e) => e.toString() == map['status'],
+        orElse: () => QuizSessionStatus.inProgress,
+      ),
+      score: map['score'],
+      totalPoints: map['totalPoints'],
+    );
   }
 }
 
-class QuizAnswer {
-  final String questionId;
-  final int selectedAnswer;
-  final bool isCorrect;
-  final int points;
-  final DateTime timestamp;
-
-  QuizAnswer({
-    required this.questionId,
-    required this.selectedAnswer,
-    required this.isCorrect,
-    required this.points,
-    required this.timestamp,
-  });
-}
-
-class QuizResult {
-  final String sessionId;
-  final int score;
-  final int totalPoints;
-  final double percentage;
-  final bool passed;
-  final int totalQuestions;
-  final int correctAnswers;
-  final Duration timeElapsed;
-  final DateTime startTime;
-  final DateTime endTime;
-  final QuizCategory category;
-  final QuizDifficulty difficulty;
-
-  QuizResult({
-    required this.sessionId,
-    required this.score,
-    required this.totalPoints,
-    required this.percentage,
-    required this.passed,
-    required this.totalQuestions,
-    required this.correctAnswers,
-    required this.timeElapsed,
-    required this.startTime,
-    required this.endTime,
-    required this.category,
-    required this.difficulty,
-  });
-
-  String get grade {
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 80) return 'A';
-    if (percentage >= 70) return 'B';
-    if (percentage >= 60) return 'C';
-    if (percentage >= 50) return 'D';
-    return 'F';
-  }
-
-  String get performanceMessage {
-    if (percentage >= 90) return 'Excellent! Outstanding performance!';
-    if (percentage >= 80) return 'Great job! Well done!';
-    if (percentage >= 70) return 'Good work! Keep it up!';
-    if (percentage >= 60) return 'Not bad! You passed!';
-    if (percentage >= 50) return 'Almost there! Study a bit more.';
-    return 'Keep studying! You can do better next time.';
-  }
-}
-
-// Ad type enumeration
-enum AdType {
-  interstitial,
-  rewarded,
-  banner,
-  native,
+// Quiz Session Status enum
+enum QuizSessionStatus {
+  notStarted,
+  inProgress,
+  completed,
+  abandoned,
 }

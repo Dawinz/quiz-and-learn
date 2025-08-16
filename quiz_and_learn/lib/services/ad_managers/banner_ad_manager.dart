@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'dart:async';
 import '../admob_config_service.dart';
 
 class BannerAdManager {
@@ -13,44 +13,38 @@ class BannerAdManager {
   BannerAd? _bannerAd;
   bool _isLoading = false;
   bool _isLoaded = false;
+  bool _isDisposed = false;
 
-  /// Check if ad is currently loading
+  /// Check if banner ad is available
+  bool get isAvailable => _bannerAd != null && _isLoaded && !_isDisposed;
+
+  /// Check if banner ad is currently loading
   bool get isLoading => _isLoading;
 
-  /// Check if ad is loaded and ready to show
-  bool get isLoaded => _isLoaded;
-
-  /// Check if ad is available
-  bool get isAvailable => _bannerAd != null && _isLoaded;
-
-  /// Initialize the banner ad manager
-  Future<void> initialize() async {
-    await _config.initialize();
-  }
-
-  /// Load a banner ad
+  /// Load banner ad
   Future<bool> loadAd() async {
-    if (_isLoading || _isLoaded) return false;
+    if (_isDisposed) return false;
+    
+    if (_isLoading) {
+      debugPrint('Banner ad already loading');
+      return false;
+    }
+
+    if (_isLoaded && _bannerAd != null) {
+      debugPrint('Banner ad already loaded');
+      return true;
+    }
 
     try {
       _isLoading = true;
-      _isLoaded = false;
+      debugPrint('Loading banner ad...');
 
-      final adUnitId = _config.bannerAdUnitId;
-      if (adUnitId.isEmpty) {
-        debugPrint('Banner ad unit ID not configured');
-        return false;
-      }
+      // Dispose of previous ad if exists
+      _bannerAd?.dispose();
 
-      // Use test ad unit ID if in test mode
-      final finalAdUnitId = _config.isTestMode
-          ? 'ca-app-pub-3940256099942544/6300978111' // Test banner ad unit ID
-          : adUnitId;
-
-      debugPrint('Loading banner ad with ID: $finalAdUnitId');
-
+      // Create new banner ad instance
       _bannerAd = BannerAd(
-        adUnitId: finalAdUnitId,
+        adUnitId: _config.bannerAdUnitId,
         size: AdSize.banner,
         request: const AdRequest(),
         listener: BannerAdListener(
@@ -60,17 +54,13 @@ class BannerAdManager {
             _isLoading = false;
           },
           onAdFailedToLoad: (ad, error) {
-            debugPrint('Banner ad failed to load: ${error.message}');
+            debugPrint('Banner ad failed to load: $error');
             _isLoaded = false;
             _isLoading = false;
-            _bannerAd = null;
+            ad.dispose();
           },
-          onAdOpened: (ad) {
-            debugPrint('Banner ad opened');
-          },
-          onAdClosed: (ad) {
-            debugPrint('Banner ad closed');
-          },
+          onAdOpened: (ad) => debugPrint('Banner ad opened'),
+          onAdClosed: (ad) => debugPrint('Banner ad closed'),
         ),
       );
 
@@ -83,6 +73,7 @@ class BannerAdManager {
           debugPrint('Banner ad load timeout');
           _isLoaded = false;
           _isLoading = false;
+          _bannerAd?.dispose();
           _bannerAd = null;
           completer.complete(false);
         }
@@ -99,6 +90,7 @@ class BannerAdManager {
           debugPrint('Banner ad load error: $error');
           _isLoaded = false;
           _isLoading = false;
+          _bannerAd?.dispose();
           _bannerAd = null;
           completer.complete(false);
         }
@@ -113,46 +105,99 @@ class BannerAdManager {
     }
   }
 
-  /// Get banner ad widget
+  /// Get banner ad widget with unique instance
   Widget? getBannerWidget() {
     if (!isAvailable) return null;
 
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('banner_${DateTime.now().millisecondsSinceEpoch}_${_bannerAd.hashCode}');
+    
     return Container(
       width: _bannerAd!.size.width.toDouble(),
       height: _bannerAd!.size.height.toDouble(),
-      child: AdWidget(ad: _bannerAd!),
+      child: AdWidget(
+        key: uniqueKey,
+        ad: _bannerAd!,
+      ),
     );
   }
 
-  /// Get adaptive banner ad widget (recommended for production)
+  /// Get adaptive banner ad widget with unique instance
   Widget? getAdaptiveBannerWidget() {
     if (!isAvailable) return null;
 
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('adaptive_banner_${DateTime.now().millisecondsSinceEpoch}_${_bannerAd.hashCode}');
+    
     return Container(
       width: double.infinity,
       height: _bannerAd!.size.height.toDouble(),
-      child: AdWidget(ad: _bannerAd!),
+      child: AdWidget(
+        key: uniqueKey,
+        ad: _bannerAd!,
+      ),
     );
   }
 
-  /// Get smart banner ad widget (automatically adjusts size)
+  /// Get smart banner ad widget with unique instance
   Widget? getSmartBannerWidget() {
     if (!isAvailable) return null;
 
-    // Create a new AdWidget instance each time to prevent "already in widget tree" errors
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('smart_banner_${DateTime.now().millisecondsSinceEpoch}_${_bannerAd.hashCode}');
+    
     return Container(
       width: double.infinity,
       height: 50, // Standard banner height
       child: AdWidget(
-        key: ValueKey(
-            'banner_${DateTime.now().millisecondsSinceEpoch}_${_bannerAd.hashCode}'),
+        key: uniqueKey,
         ad: _bannerAd!,
+      ),
+    );
+  }
+
+  /// Create a new banner ad instance for this specific widget
+  /// This prevents "already in widget tree" errors by ensuring each widget has its own ad
+  Widget? createUniqueBannerWidget() {
+    if (!isAvailable) return null;
+
+    // Create a completely new banner ad instance for this widget
+    final newBannerAd = BannerAd(
+      adUnitId: _config.bannerAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          debugPrint('Unique banner ad loaded successfully');
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('Unique banner ad failed to load: $error');
+          ad.dispose();
+        },
+        onAdOpened: (ad) => debugPrint('Unique banner ad opened'),
+        onAdClosed: (ad) => debugPrint('Unique banner ad closed'),
+      ),
+    );
+
+    // Load the new ad
+    newBannerAd.load();
+
+    // Create a unique key for this widget instance
+    final uniqueKey = ValueKey('unique_banner_${DateTime.now().millisecondsSinceEpoch}_${newBannerAd.hashCode}');
+    
+    return Container(
+      width: double.infinity,
+      height: 50,
+      child: AdWidget(
+        key: uniqueKey,
+        ad: newBannerAd,
       ),
     );
   }
 
   /// Dispose of the current ad
   void dispose() {
+    _isDisposed = true;
     _bannerAd?.dispose();
     _bannerAd = null;
     _isLoaded = false;
@@ -165,6 +210,7 @@ class BannerAdManager {
       'isLoading': _isLoading,
       'isLoaded': _isLoaded,
       'isAvailable': isAvailable,
+      'isDisposed': _isDisposed,
       'adUnitId': _config.bannerAdUnitId,
       'isTestMode': _config.isTestMode,
       'adSize': _bannerAd?.size.toString(),

@@ -4,7 +4,6 @@ import '../../services/quiz_service.dart';
 import '../../models/quiz_question.dart';
 
 import '../../constants/app_constants.dart';
-import '../../widgets/ad_loading_overlay.dart';
 import '../../widgets/ad_loading_status.dart';
 import 'quiz_results_screen.dart';
 
@@ -13,7 +12,7 @@ class QuizScreen extends StatefulWidget {
   final QuizDifficulty difficulty;
 
   const QuizScreen({
-    super.key, 
+    super.key,
     required this.category,
     required this.difficulty,
   });
@@ -29,7 +28,6 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _isLoading = false;
   bool _isAnswered = false;
   int? _selectedAnswer;
-
 
   @override
   void initState() {
@@ -48,9 +46,9 @@ class _QuizScreenState extends State<QuizScreen> {
         (c) => c.name == widget.category,
         orElse: () => QuizCategory.general,
       );
-      
+
       _quizService.startQuiz(
-        category: category,
+        category: category.name, // Convert enum to string
         difficulty: widget.difficulty,
         questionCount: 10,
       );
@@ -78,14 +76,14 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _showResults() {
-    final results = _quizService.getResults();
+    final results = _quizService.getQuizResults();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => QuizResultsScreen(
           category: widget.category,
-          score: results.score,
-          totalQuestions: results.totalQuestions,
+          score: results['score'] as int? ?? 0,
+          totalQuestions: _quizService.currentSession?.questionCount ?? 0,
         ),
       ),
     );
@@ -105,7 +103,7 @@ class _QuizScreenState extends State<QuizScreen> {
     // Wait a moment then move to next question
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        if (_quizService.nextQuestion()) {
+        if (!_quizService.isQuizComplete) {
           _loadNextQuestion();
         } else {
           // Quiz completed
@@ -141,7 +139,7 @@ class _QuizScreenState extends State<QuizScreen> {
       );
     }
 
-    final sessionStats = _quizService.sessionStats ?? {};
+    final sessionStats = _quizService.sessionStats;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -183,12 +181,16 @@ class _QuizScreenState extends State<QuizScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Progress Bar
-                  LinearProgressIndicator(
-                    value: ((sessionStats['currentQuestionIndex'] as int? ?? 0) + 1) /
-                        (sessionStats['totalQuestions'] as int? ?? 1),
-                    backgroundColor: Colors.grey[300],
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  Flexible(
+                    child: LinearProgressIndicator(
+                      value:
+                          ((sessionStats['currentQuestionIndex'] as int? ?? 0) +
+                                  1) /
+                              (sessionStats['totalQuestions'] as int? ?? 1),
+                      backgroundColor: Colors.grey[300],
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -222,7 +224,9 @@ class _QuizScreenState extends State<QuizScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isAnswered || _selectedAnswer == null ? null : () => _submitAnswer(_selectedAnswer!),
+                      onPressed: _isAnswered || _selectedAnswer == null
+                          ? null
+                          : () => _submitAnswer(_selectedAnswer!),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -322,10 +326,10 @@ class _QuizScreenState extends State<QuizScreen> {
     final bannerAd = _adMobService.getBottomBannerAd();
 
     if (bannerAd == null) {
-      return const AdLoadingPlaceholder(
-        height: 50,
-        message: 'Ad Loading...',
+      return const AdLoadingStatus(
+        showDetails: false,
         showSpinner: false,
+        customMessage: 'Ad Loading...',
       );
     }
 

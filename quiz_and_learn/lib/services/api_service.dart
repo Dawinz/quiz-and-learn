@@ -1,17 +1,17 @@
 import "package:dio/dio.dart";
 import "package:shared_preferences/shared_preferences.dart";
+import "package:flutter/foundation.dart";
 import "demo_service.dart";
 
 class ApiService {
-  // Use a proper backend URL - you can change this to your actual backend
-  static const String baseUrl = "https://your-backend-domain.com/api";
-  // For testing, you can use a local IP address if testing on same network
-  // static const String baseUrl = "http://192.168.1.100:3001/api";
-  
+  // Use config service for backend URL
+  late String baseUrl;
+
   late Dio _dio;
-  bool _useDemoMode = true; // Set to true for demo mode
+  bool _useDemoMode = false; // Set to false to use real backend
 
   ApiService() {
+    _initializeBaseUrl();
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 15),
@@ -33,6 +33,10 @@ class ApiService {
     ));
   }
 
+  void _initializeBaseUrl() {
+    baseUrl = "https://backend-o53691zww-dawson-s-projects.vercel.app/api";
+  }
+
   Future<String?> _loadToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -48,7 +52,7 @@ class ApiService {
       await prefs.setString("auth_token", token);
     } catch (e) {
       // Handle storage error
-      print("Error saving token: $e");
+      debugPrint("Error saving token: $e");
     }
   }
 
@@ -58,14 +62,15 @@ class ApiService {
       await prefs.remove("auth_token");
     } catch (e) {
       // Handle storage error
-      print("Error clearing token: $e");
+      debugPrint("Error clearing token: $e");
     }
   }
 
   void _handleError(DioException error) {
     if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
-      throw Exception("Connection timeout. Please check your internet connection.");
+      throw Exception(
+          "Connection timeout. Please check your internet connection.");
     } else if (error.type == DioExceptionType.connectionError) {
       throw Exception("No internet connection. Please check your network.");
     } else if (error.response?.statusCode == 401) {
@@ -78,11 +83,12 @@ class ApiService {
     } else if (error.response?.statusCode == 500) {
       throw Exception("Server error. Please try again later.");
     } else if (error.response?.statusCode == 0) {
-      throw Exception("Unable to connect to server. Please check your internet connection and try again.");
+      throw Exception(
+          "Unable to connect to server. Please check your internet connection and try again.");
     } else {
-      final errorMessage = error.response?.data?["message"] ?? 
-                          error.response?.data?["error"] ?? 
-                          "An error occurred. Please try again.";
+      final errorMessage = error.response?.data?["message"] ??
+          error.response?.data?["error"] ??
+          "An error occurred. Please try again.";
       throw Exception(errorMessage);
     }
   }
@@ -92,7 +98,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getProfile(); // Use demo service for health check
     }
-    
+
     try {
       final response = await _dio.get("/health");
       return response.data;
@@ -116,13 +122,14 @@ class ApiService {
         referralCode: referralCode,
       );
     }
-    
+
     try {
       final response = await _dio.post("/auth/register", data: {
         "name": name,
         "email": email,
         "password": password,
-        if (referralCode != null && referralCode.isNotEmpty) "referralCode": referralCode,
+        if (referralCode != null && referralCode.isNotEmpty)
+          "referralCode": referralCode,
       });
 
       if (response.data["success"]) {
@@ -145,7 +152,7 @@ class ApiService {
         password: password,
       );
     }
-    
+
     try {
       final response = await _dio.post("/auth/login", data: {
         "email": email,
@@ -166,7 +173,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.logout();
     }
-    
+
     try {
       await _dio.post("/auth/logout");
     } catch (e) {
@@ -180,7 +187,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getProfile();
     }
-    
+
     try {
       final response = await _dio.get("/auth/me");
       return response.data;
@@ -193,7 +200,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.validateToken();
     }
-    
+
     try {
       final token = await _loadToken();
       if (token == null) return false;
@@ -220,7 +227,7 @@ class ApiService {
         limit: limit,
       );
     }
-    
+
     try {
       final response = await _dio.get("/quizzes", queryParameters: {
         if (category != null) "category": category,
@@ -238,7 +245,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getQuizById(quizId);
     }
-    
+
     try {
       final response = await _dio.get("/quizzes/$quizId");
       return response.data;
@@ -257,7 +264,7 @@ class ApiService {
         answers: answers,
       );
     }
-    
+
     try {
       final response = await _dio.post("/quizzes/$quizId/submit", data: {
         "answers": answers,
@@ -273,7 +280,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getWalletBalance();
     }
-    
+
     try {
       final response = await _dio.get("/wallet/balance");
       return response.data;
@@ -286,7 +293,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getTransactions();
     }
-    
+
     try {
       final response = await _dio.get("/wallet/transactions");
       return response.data;
@@ -300,7 +307,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getReferralStats();
     }
-    
+
     try {
       final response = await _dio.get("/referrals/stats");
       return response.data;
@@ -313,7 +320,7 @@ class ApiService {
     if (_useDemoMode) {
       return DemoService.getReferralLink();
     }
-    
+
     try {
       final response = await _dio.get("/referrals/link");
       return response.data;

@@ -45,11 +45,12 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
 
     try {
       final success = await _walletService.claimDailyLoginBonus();
-      
+
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Daily login bonus claimed! You earned ${_walletService.dailyLoginStreak * 5 + 10} coins.'),
+            content: Text(
+                'Daily login bonus claimed! You earned ${_walletService.dailyLoginStreak * 5 + 10} coins.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -58,7 +59,8 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('You have already claimed your daily login bonus today.'),
+            content:
+                Text('You have already claimed your daily login bonus today.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -79,7 +81,7 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
 
   String _formatTimeUntilNext(Duration? duration) {
     if (duration == null || duration.inSeconds <= 0) return 'Available now!';
-    
+
     if (duration.inDays > 0) {
       return '${duration.inDays}d ${duration.inHours % 24}h ${duration.inMinutes % 60}m';
     } else if (duration.inHours > 0) {
@@ -118,24 +120,24 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
                 children: [
                   // Main Bonus Card
                   _buildMainBonusCard(canClaim, currentStreak),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Streak Information
                   _buildStreakCard(currentStreak),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Weekly Calendar
                   _buildWeeklyCalendar(lastLogin),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Bonus Schedule
                   _buildBonusSchedule(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Last Login Info
                   if (lastLogin != null) _buildLastLoginInfo(lastLogin),
                 ],
@@ -146,12 +148,12 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
 
   Widget _buildMainBonusCard(bool canClaim, int currentStreak) {
     final bonusAmount = currentStreak * 5 + 10; // Base 10 + streak bonus
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: canClaim 
+          colors: canClaim
               ? [AppColors.primary, AppColors.primary.withOpacity(0.8)]
               : [Colors.grey, Colors.grey.withOpacity(0.8)],
           begin: Alignment.topLeft,
@@ -160,7 +162,8 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (canClaim ? AppColors.primary : Colors.grey).withOpacity(0.3),
+            color:
+                (canClaim ? AppColors.primary : Colors.grey).withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -188,9 +191,9 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Bonus Amount
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -220,9 +223,9 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Claim Button or Timer
           if (canClaim)
             SizedBox(
@@ -244,7 +247,8 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColors.primary),
                         ),
                       )
                     : const Text(
@@ -276,7 +280,8 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _formatTimeUntilNext(_walletService.timeUntilNextDailyLogin),
+                    _formatTimeUntilNext(
+                        _walletService.timeUntilNextDailyLogin),
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -326,9 +331,9 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Row(
             children: [
               Expanded(
@@ -357,9 +362,9 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Streak Progress
           if (currentStreak > 0) ...[
             const Text(
@@ -383,7 +388,8 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
     );
   }
 
-  Widget _buildStreakStat(String label, String value, IconData icon, Color color) {
+  Widget _buildStreakStat(
+      String label, String value, IconData icon, Color color) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
@@ -413,7 +419,7 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
   Widget _buildWeeklyCalendar(DateTime? lastLogin) {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -448,20 +454,18 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ),
             ],
           ),
-          
           const SizedBox(height: 16),
-          
           Row(
             children: List.generate(7, (index) {
               final date = weekStart.add(Duration(days: index));
-              final hasLogin = lastLogin != null && 
+              final hasLogin = lastLogin != null &&
                   date.year == lastLogin.year &&
                   date.month == lastLogin.month &&
                   date.day == lastLogin.day;
               final isToday = date.year == now.year &&
                   date.month == now.month &&
                   date.day == now.day;
-              
+
               return Expanded(
                 child: Column(
                   children: [
@@ -479,18 +483,19 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
                       height: 32,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: hasLogin 
-                            ? AppColors.primary 
-                            : isToday 
+                        color: hasLogin
+                            ? AppColors.primary
+                            : isToday
                                 ? Colors.orange.withOpacity(0.2)
                                 : Colors.grey.withOpacity(0.1),
-                        border: isToday 
+                        border: isToday
                             ? Border.all(color: Colors.orange, width: 2)
                             : null,
                       ),
                       child: Center(
                         child: hasLogin
-                            ? const Icon(Icons.check, color: Colors.white, size: 16)
+                            ? const Icon(Icons.check,
+                                color: Colors.white, size: 16)
                             : isToday
                                 ? Text(
                                     '${now.day}',
@@ -575,9 +580,7 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ),
             ],
           ),
-          
           const SizedBox(height: 16),
-          
           _buildBonusRow(1, 3, '10 coins'),
           _buildBonusRow(4, 7, '25 coins'),
           _buildBonusRow(8, 14, '40 coins'),
@@ -592,7 +595,7 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
 
   Widget _buildBonusRow(int startDay, int? endDay, String bonus) {
     final range = endDay != null ? '$startDay-$endDay days' : '$startDay+ days';
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -672,9 +675,7 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
               ),
             ],
           ),
-          
           const SizedBox(height: 16),
-          
           Row(
             children: [
               Expanded(
@@ -732,7 +733,7 @@ class _DailyLoginScreenState extends State<DailyLoginScreen> {
   String _formatTimeAgo(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
     } else if (difference.inHours > 0) {

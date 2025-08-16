@@ -31,12 +31,12 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
     try {
       // Wait for service to initialize
       await _walletService.initialize();
-      
+
       // For now, create sample data
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _transactions = _getSampleTransactions();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -68,7 +68,12 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
         amount: 18,
         balanceAfter: 100,
         description: 'Quiz completion bonus: Science (Medium)',
-        metadata: {'score': 8, 'totalQuestions': 10, 'category': 'Science', 'difficulty': 'Medium'},
+        metadata: {
+          'score': 8,
+          'totalQuestions': 10,
+          'category': 'Science',
+          'difficulty': 'Medium'
+        },
         timestamp: now.subtract(const Duration(hours: 4)),
       ),
       CoinTransaction(
@@ -88,7 +93,11 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
         amount: 50,
         balanceAfter: -18,
         description: 'Achievement unlocked: First Quiz',
-        metadata: {'achievementId': 'first_quiz', 'achievementTitle': 'First Quiz', 'achievementTier': 'bronze'},
+        metadata: {
+          'achievementId': 'first_quiz',
+          'achievementTitle': 'First Quiz',
+          'achievementTier': 'bronze'
+        },
         timestamp: now.subtract(const Duration(days: 2)),
       ),
       CoinTransaction(
@@ -98,7 +107,12 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
         amount: 200,
         balanceAfter: -68,
         description: 'Unlocked: Ad Removal (7 days)',
-        metadata: {'featureId': 'ad_removal', 'featureName': 'Ad Removal', 'featureType': 'adRemoval', 'duration': 7},
+        metadata: {
+          'featureId': 'ad_removal',
+          'featureName': 'Ad Removal',
+          'featureType': 'adRemoval',
+          'duration': 7
+        },
         timestamp: now.subtract(const Duration(days: 3)),
       ),
       CoinTransaction(
@@ -108,7 +122,12 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
         amount: 15,
         balanceAfter: 132,
         description: 'Quiz completion bonus: History (Easy)',
-        metadata: {'score': 5, 'totalQuestions': 10, 'category': 'History', 'difficulty': 'Easy'},
+        metadata: {
+          'score': 5,
+          'totalQuestions': 10,
+          'category': 'History',
+          'difficulty': 'Easy'
+        },
         timestamp: now.subtract(const Duration(days: 4)),
       ),
     ];
@@ -119,12 +138,15 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
 
     // Filter by type
     if (_selectedFilter != 'all') {
-      filtered = filtered.where((t) => t.type.toString().split('.').last == _selectedFilter).toList();
+      filtered = filtered
+          .where((t) => t.type.toString().split('.').last == _selectedFilter)
+          .toList();
     }
 
     // Filter by category
     if (_selectedCategory != 'all') {
-      filtered = filtered.where((t) => t.category == _selectedCategory).toList();
+      filtered =
+          filtered.where((t) => t.category == _selectedCategory).toList();
     }
 
     // Sort by timestamp (newest first)
@@ -237,7 +259,9 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
                               'Net Balance',
                               '${stats['netBalance']}',
                               Icons.account_balance_wallet,
-                              stats['netBalance'] >= 0 ? Colors.blue : Colors.orange,
+                              stats['netBalance'] >= 0
+                                  ? Colors.blue
+                                  : Colors.orange,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -300,9 +324,12 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
                         child: Row(
                           children: [
                             _buildFilterChip('all', 'All', isCategory: true),
-                            _buildFilterChip('Earnings', 'Earnings', isCategory: true),
-                            _buildFilterChip('Spending', 'Spending', isCategory: true),
-                            _buildFilterChip('Refunds', 'Refunds', isCategory: true),
+                            _buildFilterChip('Earnings', 'Earnings',
+                                isCategory: true),
+                            _buildFilterChip('Spending', 'Spending',
+                                isCategory: true),
+                            _buildFilterChip('Refunds', 'Refunds',
+                                isCategory: true),
                           ],
                         ),
                       ),
@@ -330,7 +357,8 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -364,9 +392,11 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
     );
   }
 
-  Widget _buildFilterChip(String value, String label, {bool isCategory = false}) {
-    final isSelected = isCategory ? _selectedCategory == value : _selectedFilter == value;
-    
+  Widget _buildFilterChip(String value, String label,
+      {bool isCategory = false}) {
+    final isSelected =
+        isCategory ? _selectedCategory == value : _selectedFilter == value;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
@@ -411,7 +441,7 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: transaction.isPositive 
+                color: transaction.isPositive
                     ? Colors.green.withOpacity(0.1)
                     : Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(25),
@@ -423,9 +453,9 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(width: 16),
-            
+
             // Transaction Details
             Expanded(
               child: Column(
@@ -464,7 +494,7 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
                 ],
               ),
             ),
-            
+
             // Amount
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -494,8 +524,9 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
 
   String _formatMetadata(Map<String, dynamic> metadata) {
     if (metadata.isEmpty) return '';
-    
-    final entries = metadata.entries.take(2).map((e) => '${e.key}: ${e.value}').join(', ');
+
+    final entries =
+        metadata.entries.take(2).map((e) => '${e.key}: ${e.value}').join(', ');
     return entries;
   }
 

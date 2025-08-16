@@ -17,7 +17,6 @@ class _QuizCategoryScreenState extends State<QuizCategoryScreen> {
   final AdMobService _adMobService = AdMobService.instance;
   bool _isInterstitialAdLoading = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -25,6 +24,7 @@ class _QuizCategoryScreenState extends State<QuizCategoryScreen> {
   }
 
   Future<void> _showInterstitialAd() async {
+    if (!mounted) return;
     setState(() {
       _isInterstitialAdLoading = true;
     });
@@ -34,9 +34,11 @@ class _QuizCategoryScreenState extends State<QuizCategoryScreen> {
     } catch (e) {
       // Ad failed to show, continue without it
     } finally {
-      setState(() {
-        _isInterstitialAdLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isInterstitialAdLoading = false;
+        });
+      }
     }
   }
 
@@ -294,7 +296,7 @@ class _QuizCategoryScreenState extends State<QuizCategoryScreen> {
 
   Widget _buildBottomBannerAd() {
     final bannerAd = _adMobService.getBottomBannerAd();
-    
+
     if (bannerAd == null) {
       return const AdLoadingPlaceholder(
         height: 60,

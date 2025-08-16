@@ -7,11 +7,7 @@ enum FeatureType {
   prioritySupport
 }
 
-enum FeatureStatus {
-  locked,
-  unlocked,
-  expired
-}
+enum FeatureStatus { locked, unlocked, expired }
 
 class PremiumFeature {
   final String id;
@@ -45,9 +41,8 @@ class PremiumFeature {
         (e) => e.toString().split('.').last == json['type'],
       ),
       coinCost: json['coinCost'],
-      duration: json['duration'] != null 
-          ? Duration(days: json['duration']) 
-          : null,
+      duration:
+          json['duration'] != null ? Duration(days: json['duration']) : null,
       iconPath: json['iconPath'],
       metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
       isActive: json['isActive'] ?? true,
@@ -168,9 +163,8 @@ class UserPremiumFeature {
         (e) => e.toString().split('.').last == json['status'],
       ),
       unlockedAt: DateTime.parse(json['unlockedAt']),
-      expiresAt: json['expiresAt'] != null 
-          ? DateTime.parse(json['expiresAt']) 
-          : null,
+      expiresAt:
+          json['expiresAt'] != null ? DateTime.parse(json['expiresAt']) : null,
       coinCost: json['coinCost'],
       metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
     );
@@ -234,7 +228,7 @@ class UserPremiumFeature {
   String get expiryStatus {
     if (expiresAt == null) return 'Permanent';
     if (isExpired) return 'Expired';
-    
+
     final timeLeft = timeUntilExpiry!;
     if (timeLeft.inDays > 0) {
       return 'Expires in ${timeLeft.inDays} days';

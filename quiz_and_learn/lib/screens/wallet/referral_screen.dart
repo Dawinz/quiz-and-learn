@@ -14,7 +14,7 @@ class ReferralScreen extends StatefulWidget {
 class _ReferralScreenState extends State<ReferralScreen> {
   final EnhancedWalletService _walletService = EnhancedWalletService.instance;
   final TextEditingController _referralCodeController = TextEditingController();
-  
+
   ReferralCode? _userReferralCode;
   List<ReferralModel> _referrals = [];
   bool _isLoading = true;
@@ -39,13 +39,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
     try {
       await _walletService.initialize();
-      
+
       // For now, create sample data
       await Future.delayed(const Duration(seconds: 1));
-      
+
       _userReferralCode = _getSampleReferralCode();
       _referrals = _getSampleReferrals();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -114,12 +114,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
     try {
       final success = await _walletService.useReferralCode(code);
-      
+
       if (success) {
         _referralCodeController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Successfully used referral code! You earned 100 coins.'),
+            content:
+                Text('Successfully used referral code! You earned 100 coins.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -194,19 +195,19 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 children: [
                   // Your Referral Code Section
                   _buildReferralCodeSection(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Use Referral Code Section
                   _buildUseReferralCodeSection(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Referral Statistics
                   _buildReferralStats(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Referral History
                   _buildReferralHistory(),
                 ],
@@ -250,7 +251,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Referral Code Display
           Container(
             padding: const EdgeInsets.all(16),
@@ -309,9 +310,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Action Buttons
           Row(
             children: [
@@ -349,9 +350,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Usage Stats
           Row(
             children: [
@@ -365,7 +366,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
               Expanded(
                 child: _buildUsageStat(
                   'Remaining',
-                  _userReferralCode!.remainingUses == -1 ? '∞' : '${_userReferralCode!.remainingUses}',
+                  _userReferralCode!.remainingUses == -1
+                      ? '∞'
+                      : '${_userReferralCode!.remainingUses}',
                   Icons.all_inclusive,
                 ),
               ),
@@ -443,7 +446,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
           const Text(
             'Enter a friend\'s referral code to earn 100 coins bonus!',
             style: TextStyle(
@@ -451,9 +453,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               color: Colors.grey,
             ),
           ),
-          
           const SizedBox(height: 16),
-          
           Row(
             children: [
               Expanded(
@@ -478,7 +478,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -489,7 +490,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Text('Submit'),
@@ -502,8 +504,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   Widget _buildReferralStats() {
-    final completedReferrals = _referrals.where((r) => r.status == ReferralStatus.completed).length;
-    final pendingReferrals = _referrals.where((r) => r.status == ReferralStatus.pending).length;
+    final completedReferrals =
+        _referrals.where((r) => r.status == ReferralStatus.completed).length;
+    final pendingReferrals =
+        _referrals.where((r) => r.status == ReferralStatus.pending).length;
     final totalEarnings = _referrals
         .where((r) => r.status == ReferralStatus.completed)
         .fold(0, (sum, r) => sum + r.bonusAmount);
@@ -543,7 +547,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
           Row(
             children: [
               Expanded(
@@ -579,7 +582,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -654,7 +658,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -695,9 +698,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Referral Details
           Expanded(
             child: Column(
@@ -730,7 +733,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ],
             ),
           ),
-          
+
           // Bonus Amount and Status
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,

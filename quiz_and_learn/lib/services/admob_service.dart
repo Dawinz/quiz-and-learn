@@ -147,7 +147,6 @@ class AdMobService {
       await Future.wait([
         _rewardedManager.initialize(),
         _interstitialManager.initialize(),
-        _bannerManager.initialize(),
         _nativeManager.initialize(),
       ]);
 
@@ -254,7 +253,18 @@ class AdMobService {
     }
 
     // Create a unique banner ad widget to prevent "already in widget tree" errors
-    return _bannerManager.getSmartBannerWidget();
+    return _bannerManager.createUniqueBannerWidget();
+  }
+
+  /// Get banner ad widget with unique instance (prevents AdWidget errors)
+  Widget? getUniqueBannerAd() {
+    if (!_isInitialized) {
+      debugPrint('AdMob service not initialized. Cannot provide banner ad.');
+      return null;
+    }
+
+    // Always create a unique banner ad widget to prevent "already in widget tree" errors
+    return _bannerManager.createUniqueBannerWidget();
   }
 
   /// Get native ad widget for results screen

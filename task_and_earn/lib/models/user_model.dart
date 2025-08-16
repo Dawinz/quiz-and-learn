@@ -15,6 +15,12 @@ class UserModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Additional properties for enhanced functionality
+  final int currentBalance;
+  final int totalEarnings;
+  final int tasksCompleted;
+  final int referralBonus;
+
   UserModel({
     required this.id,
     required this.name,
@@ -31,6 +37,10 @@ class UserModel {
     required this.referralEarnings,
     required this.createdAt,
     required this.updatedAt,
+    this.currentBalance = 0,
+    this.totalEarnings = 0,
+    this.tasksCompleted = 0,
+    this.referralBonus = 0,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
@@ -50,6 +60,14 @@ class UserModel {
       referralEarnings: map['referralEarnings']?.toInt() ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
+      currentBalance:
+          map['currentBalance']?.toInt() ?? map['totalCoins']?.toInt() ?? 0,
+      totalEarnings:
+          map['totalEarnings']?.toInt() ?? map['totalCoins']?.toInt() ?? 0,
+      tasksCompleted: map['tasksCompleted']?.toInt() ?? 0,
+      referralBonus: map['referralBonus']?.toInt() ??
+          map['referralEarnings']?.toInt() ??
+          0,
     );
   }
 
@@ -70,6 +88,10 @@ class UserModel {
       'referralEarnings': referralEarnings,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'currentBalance': currentBalance,
+      'totalEarnings': totalEarnings,
+      'tasksCompleted': tasksCompleted,
+      'referralBonus': referralBonus,
     };
   }
 
@@ -89,6 +111,10 @@ class UserModel {
     int? referralEarnings,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? currentBalance,
+    int? totalEarnings,
+    int? tasksCompleted,
+    int? referralBonus,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -106,6 +132,10 @@ class UserModel {
       referralEarnings: referralEarnings ?? this.referralEarnings,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      currentBalance: currentBalance ?? this.currentBalance,
+      totalEarnings: totalEarnings ?? this.totalEarnings,
+      tasksCompleted: tasksCompleted ?? this.tasksCompleted,
+      referralBonus: referralBonus ?? this.referralBonus,
     );
   }
 }
